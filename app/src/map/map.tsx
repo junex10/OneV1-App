@@ -6,6 +6,7 @@ import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system";
 import { LeafletView } from 'react-native-leaflet-view';
 import { useLocation } from '../../providers/location';
+import MapView, { PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 
 const Map: React.FC = () => {
 
@@ -17,7 +18,7 @@ const Map: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     
-    const loadMap = async () => {
+    /*const loadMap = async () => {
       try {
         const path = require("./../../../assets/leaflet.html");
         const asset = Asset.fromModule(path);
@@ -39,7 +40,7 @@ const Map: React.FC = () => {
       }
     };
 
-    loadMap();
+    loadMap();*/
 
     return () => {
       isMounted = false;
@@ -50,8 +51,8 @@ const Map: React.FC = () => {
     return <ActivityIndicator size="large" />
   }
     return (
-      <>
-        <LeafletView
+      <View style={styles.container}>
+        {/*<LeafletView
           source={{ html: webViewContent }}
           mapCenterPosition={{
             lat: getLocation?.coords.latitude,
@@ -67,16 +68,34 @@ const Map: React.FC = () => {
             }
           ]}
           doDebug={false}
+        />*/}
+        <MapView 
+          style={styles.map} 
+          provider={PROVIDER_GOOGLE}
+          initialRegion={{
+            latitude: 37.78825,
+            longitude: -122.4324,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+          showsUserLocation={true}
         />
-      </>
+      </View>
     );
   }
 
   const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
     button: {
       fontSize: 20,
       textDecorationLine: 'underline',
       color: '#fff',
+    },
+    map: {
+      width: '100%',
+      height: '100%',
     },
   });
   

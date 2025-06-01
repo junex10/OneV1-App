@@ -1,12 +1,8 @@
-REACT LEAFLET:
+ADD SHA-1 AND PACKAGE TO GOOGLE MAPS
+https://docs.expo.dev/versions/latest/sdk/map-view/
 
-https://www.npmjs.com/package/react-native-leaflet-view?activeTab=readme
+GENERATE ONE SHA THRO CMD COMMAND
+https://stackoverflow.com/questions/61119983/how-do-i-get-sha-1-certificate-in-expo
 
-https://github.com/react-native-webview/react-native-webview/issues/3506
-
-NVM VERSION: 18.18.2
-EXPO: 6.3.10
-REACT NATIVE WEBVIEW: ~13.6.4
-
-LOCATION: 
-https://docs.expo.dev/versions/latest/sdk/location/
+JAVA 17
+https://adoptium.net/temurin/releases/?version=17&os=any&arch=any

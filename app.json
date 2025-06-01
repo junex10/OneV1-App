@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "One",
-    "slug": "One",
+    "name": "OneV1",
+    "slug": "test-publish-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,7 +20,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.pagepro.testpublishapp",
-      "buildNumber": "1.0.0"
+      "buildNumber": "1.0.0",
+      "config": {
+        "googleMapsApiKey": "process.env.GOOGLE_API_KEY"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +31,12 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.pagepro.testpublishapp",
-      "versionCode": 1
+      "versionCode": 1,
+      "config": {
+        "googleMaps": {
+          "apiKey": "process.env.GOOGLE_API_KEY"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
