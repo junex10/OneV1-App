@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../global";
 
 interface CustomModalProps {
   visible: boolean;
@@ -8,25 +9,40 @@ interface CustomModalProps {
   iconColor?: string;
   iconSize?: number;
   title?: string;
-  message: string;
+  message?: string;
   buttons?: Array<{
     label: string;
     onPress: () => void;
     color?: string;
   }>;
   onClose: () => void;
+  timeout?: number;
 }
 
 const CustomModal: React.FC<CustomModalProps> = ({
   visible,
-  iconName = "information-circle-outline",
+  iconName,
   iconColor = "#FD3A73",
   iconSize = 48,
   title,
   message,
   buttons = [],
   onClose,
+  timeout,
 }) => {
+  useEffect(() => {
+    let timeOut: any;
+
+    if (timeout)
+      timeOut = setTimeout(() => {
+        onClose();
+      }, timeout);
+
+    return () => {
+      clearTimeout(timeOut);
+    };
+  }, [timeout, onClose]);
+
   return (
     <Modal
       visible={visible}
@@ -36,13 +52,15 @@ const CustomModal: React.FC<CustomModalProps> = ({
     >
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <View style={styles.iconContainer}>
-            <Ionicons
-              name={iconName as any}
-              size={iconSize}
-              color={iconColor}
-            />
-          </View>
+          {iconName ? (
+            <View style={styles.iconContainer}>
+              <Ionicons
+                name={iconName as any}
+                size={iconSize}
+                color={iconColor}
+              />
+            </View>
+          ) : null}
           {title && <Text style={styles.title}>{title}</Text>}
           <Text style={styles.message}>{message}</Text>
           <View style={styles.buttonsRow}>
@@ -74,7 +92,7 @@ const styles = StyleSheet.create({
   },
   modal: {
     width: "80%",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.blue_dark_2,
     borderRadius: 16,
     padding: 28,
     alignItems: "center",
@@ -90,15 +108,15 @@ const styles = StyleSheet.create({
   },
   title: {
     marginTop: 28,
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#222",
+    color: Colors.purple,
     textAlign: "center",
   },
   message: {
     marginTop: 12,
     fontSize: 16,
-    color: "#444",
+    color: Colors.gray,
     textAlign: "center",
     marginBottom: 32,
   },

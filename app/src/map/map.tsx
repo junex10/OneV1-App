@@ -44,15 +44,10 @@ const Map: React.FC = () => {
     <View style={styles.container}>
       <CustomModal
         visible={visible}
-        iconName="checkmark-circle-outline"
-        iconColor="#4BB543"
-        title="Success"
-        message="Your action was successful!"
-        buttons={[
-          { label: "Cancel", onPress: () => setVisible(false), color: "#aaa" },
-          { label: "OK", onPress: () => setVisible(false), color: "#4BB543" },
-        ]}
+        title="One"
+        message="Finding juices one places!"
         onClose={() => setVisible(false)}
+        timeout={3000}
       />
       <View style={styles.searchBarContainer}>
         <TextInput
