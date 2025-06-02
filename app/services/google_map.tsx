@@ -1,19 +1,23 @@
-import axios from 'axios';
-import { Coordinates } from './../interfaces'
-import Constants from 'expo-constants';
+import axios from "axios";
+import { Coordinates } from "./../interfaces";
+import Constants from "expo-constants";
+import { api } from "./../providers/api";
 
 const API = Constants.expoConfig?.extra?.API;
 
 const GoogleMaps = {
-    placesNearby: async (coordinates: Coordinates) => {
-        try {
-            const response = await axios.post(`${API}app/map/placesNearby`, coordinates);
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching places:', error);
-            throw error;
-        }
+  placesNearby: async (coordinates: Coordinates) => {
+    try {
+      const response = await api.post(
+        `${API}app/map/placesNearby`,
+        coordinates
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
     }
-}
+  },
+};
 
 export default GoogleMaps;

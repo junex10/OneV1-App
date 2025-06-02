@@ -7,6 +7,7 @@ import {
   Text,
   TextInput,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { LeafletView } from "react-native-leaflet-view";
@@ -14,11 +15,22 @@ import { useLocation } from "../../providers/location";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 import { mapCustomStyle, Colors } from "../../global";
 import { Ionicons } from "@expo/vector-icons";
+import { GoogleMaps } from "./../../services";
 
 const Map: React.FC = () => {
   const router = useRouter();
   const getLocation: any = useLocation();
   const [search, setSearch] = useState("");
+
+  const placesNearby = async () => {
+    if (!getLocation?.coords)
+      return Alert.alert("We couldn't get your current location");
+
+    const data = await GoogleMaps.placesNearby({
+      latitude: getLocation.coords.latitude,
+      longitude: getLocation.coords.longitude,
+    });
+  };
 
   useEffect(() => {
     if (!getLocation?.coords)
@@ -74,10 +86,7 @@ const Map: React.FC = () => {
           <Ionicons name="star-outline" size={28} color={Colors.purple} />
           <Text style={styles.navLabel}>Fav</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/map")}
-        >
+        <TouchableOpacity style={styles.navItem} onPress={placesNearby}>
           <Ionicons name="location-outline" size={28} color={Colors.purple} />
           <Text style={styles.navLabel}>One</Text>
         </TouchableOpacity>
