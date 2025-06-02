@@ -4,10 +4,10 @@ import { StyleSheet, Text, View, Button, ActivityIndicator, Alert, Linking, Plat
 import { Link, useRouter } from 'expo-router';
 import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system";
-import { LeafletView } from 'react-native-leaflet-view';
 import { useLocation } from '../../providers/location';
 import MapView, { PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 import { mapCustomStyle } from '../../global';
+import { GoogleMaps } from '../../services';
 
 const Map: React.FC = () => {
 
@@ -16,7 +16,11 @@ const Map: React.FC = () => {
 
 
   useEffect(() => {
-    
+    /**GoogleMaps.placesNearby({
+          latitude: getLocation.coords.latitude || 35.370906, 
+          longitude: getLocation.coords.longitude || -80.708297
+        }) */
+
   }, []);
 
     return (
