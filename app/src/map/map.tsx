@@ -21,7 +21,8 @@ const Map: React.FC = () => {
   const router = useRouter();
   const getLocation: any = useLocation();
   const [search, setSearch] = useState("");
-  const [visible, setVisible] = useState(true);
+  const [loadingInitialModel, setloadingInitialModel] = useState(true);
+  const [loadingOnes, setLoadingOnes] = useState(true);
 
   const placesNearby = async () => {
     if (!getLocation?.coords)
@@ -31,6 +32,8 @@ const Map: React.FC = () => {
       latitude: getLocation.coords.latitude,
       longitude: getLocation.coords.longitude,
     });
+
+    setLoadingOnes(true);
   };
 
   useEffect(() => {
@@ -42,11 +45,20 @@ const Map: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {/** LoadingInitialModel */}
       <CustomModal
-        visible={visible}
+        visible={loadingInitialModel}
         title="One"
         message="Finding juices one places!"
-        onClose={() => setVisible(false)}
+        onClose={() => setloadingInitialModel(false)}
+        timeout={3000}
+      />
+      {/** loadingOnes */}
+      <CustomModal
+        visible={loadingOnes}
+        title="One"
+        message="Finding funny places!"
+        onClose={() => setLoadingOnes(false)}
         timeout={3000}
       />
       <View style={styles.searchBarContainer}>
