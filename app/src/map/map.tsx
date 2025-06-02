@@ -1,5 +1,4 @@
-import { StatusBar } from "expo-status-bar";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -9,18 +8,20 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { LeafletView } from "react-native-leaflet-view";
 import { useLocation } from "../../providers/location";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 import { mapCustomStyle, Colors } from "../../global";
 import { Ionicons } from "@expo/vector-icons";
 import { GoogleMaps } from "./../../services";
+import { CustomModal } from "../../resources";
 
 const Map: React.FC = () => {
   const router = useRouter();
   const getLocation: any = useLocation();
   const [search, setSearch] = useState("");
+  const [visible, setVisible] = useState(true);
 
   const placesNearby = async () => {
     if (!getLocation?.coords)
@@ -41,6 +42,18 @@ const Map: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <CustomModal
+        visible={visible}
+        iconName="checkmark-circle-outline"
+        iconColor="#4BB543"
+        title="Success"
+        message="Your action was successful!"
+        buttons={[
+          { label: "Cancel", onPress: () => setVisible(false), color: "#aaa" },
+          { label: "OK", onPress: () => setVisible(false), color: "#4BB543" },
+        ]}
+        onClose={() => setVisible(false)}
+      />
       <View style={styles.searchBarContainer}>
         <TextInput
           style={styles.searchBar}
