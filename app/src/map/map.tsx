@@ -28,7 +28,7 @@ const Map: React.FC = () => {
   const [loadingInitialModel, setloadingInitialModel] = useState(true);
   const [loadingOnes, setLoadingOnes] = useState(true);
   const [heading, setHeading] = useState(0);
-  const [places, setPlaces] = useState([]);
+  const [events, setEvents] = useState([]);
   const [zoom, setZoom] = useState(0.01);
   const mapRef = useRef<MapView>(null);
 
@@ -61,12 +61,12 @@ const Map: React.FC = () => {
     );
     animateZoom(12);
 
-    /*const data = await GoogleMaps.placesNearby({
+    const data = await GoogleMaps.getEvents({
       latitude: getLocation.coords.latitude,
       longitude: getLocation.coords.longitude,
     });
 
-    setPlaces(data?.places);*/
+    setEvents(data?.places);
 
     setLoadingOnes(true);
   };
@@ -216,24 +216,32 @@ const Map: React.FC = () => {
         )*/}
 
         {/**  All the places around generated */}
-        {places.length > 0 ? (
+        {events.length > 0 ? (
           <>
-            {places.map((itemPlace: any, index) => (
+            {events.map((itemPlace: any, index) => (
               <Marker
-                key={`place_marker_${index}`}
+                key={`event_marker_${index}`}
                 coordinate={{
-                  latitude: itemPlace?.location?.lat,
-                  longitude: itemPlace?.location?.lng,
+                  latitude: Number(itemPlace?.latitude),
+                  longitude: Number(itemPlace?.longitude),
                 }}
-                title={itemPlace?.name}
-                pinColor={itemPlace?.icon_background_color}
+                title={itemPlace?.content}
+                pinColor={Colors.purple}
               >
                 <View style={styles.placeMarker}>
-                  <Image
-                    source={{ uri: itemPlace?.icon }}
-                    style={styles.placeMarkerImg}
-                    resizeMode="contain"
-                  />
+                  {itemPlace?.main_pic ? (
+                    <Image
+                      source={{ uri: itemPlace?.icon }}
+                      style={styles.placeMarkerImg}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Ionicons
+                      name="location-outline"
+                      size={20}
+                      color={Colors.purple}
+                    />
+                  )}
                 </View>
               </Marker>
             ))}
