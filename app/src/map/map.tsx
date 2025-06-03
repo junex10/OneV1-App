@@ -11,6 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
+import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
 import { GoogleMaps } from "./../../services";
 import { CustomModal } from "../../resources";
@@ -25,7 +26,7 @@ const Map: React.FC = () => {
   const [search, setSearch] = useState("");
   const [loadingInitialModel, setloadingInitialModel] = useState(true);
   const [loadingOnes, setLoadingOnes] = useState(true);
-  const [zoom, setZoom] = useState(0.01);
+  const [heading, setHeading] = useState(0);
   const mapRef = useRef<MapView>(null);
 
   const animateZoom = (newZoom: number) => {
@@ -39,7 +40,7 @@ const Map: React.FC = () => {
           zoom: newZoom,
           altitude: newZoom * 2,
         },
-        { duration: 1000 }
+        { duration: 1200 }
       );
     }
   };
@@ -66,10 +67,21 @@ const Map: React.FC = () => {
   };
 
   useEffect(() => {
+    let subscription: Location.LocationSubscription;
+    (async () => {
+      subscription = await Location.watchHeadingAsync((data) => {
+        setHeading(data.trueHeading ?? data.magHeading ?? 0);
+      });
+    })();
+
     if (!getLocation?.coords)
       return () => {
         <ActivityIndicator size="large" />;
       };
+
+    return () => {
+      subscription && subscription.remove();
+    };
   }, []);
 
   return (
@@ -154,7 +166,7 @@ const Map: React.FC = () => {
               });
             }}
           />
-        )
+        )}
         <Marker
           coordinate={{
             latitude: 35.74753,
@@ -163,8 +175,40 @@ const Map: React.FC = () => {
           title="Destination"
           description="Final destination"
           pinColor={Colors.purple}
-        />
-        */}
+        />*/}
+
+        {/** When you're driving to the place change the angle */}
+
+        {/*getLocation?.coords && (
+          <MapViewDirections
+            strokeColor={Colors.purple}
+            strokeWidth={5}
+            origin={{
+              latitude: getLocation.coords.latitude,
+              longitude: getLocation.coords.longitude,
+            }}
+            destination={{
+              latitude: 35.370906,
+              longitude: -80.708297,
+            }}
+            apikey={apiKey}
+            onReady={(result) => {
+              if (result.coordinates.length > 1) {
+                const next = result.coordinates[0];
+                mapRef.current?.animateCamera(
+                  {
+                    center: next,
+                    pitch: 60,
+                    heading,
+                    zoom: 20,
+                    altitude: 300,
+                  },
+                  { duration: 100 }
+                );
+              }
+            }}
+          />
+        )*/}
       </MapView>
       <View style={styles.bottomNav}>
         <TouchableOpacity
