@@ -7,6 +7,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
@@ -27,6 +28,8 @@ const Map: React.FC = () => {
   const [loadingInitialModel, setloadingInitialModel] = useState(true);
   const [loadingOnes, setLoadingOnes] = useState(true);
   const [heading, setHeading] = useState(0);
+  const [places, setPlaces] = useState([]);
+  const [zoom, setZoom] = useState(0.01);
   const mapRef = useRef<MapView>(null);
 
   const animateZoom = (newZoom: number) => {
@@ -58,10 +61,12 @@ const Map: React.FC = () => {
     );
     animateZoom(12);
 
-    /*const data = await GoogleMaps.placesNearby({
+    const data = await GoogleMaps.placesNearby({
       latitude: getLocation.coords.latitude,
       longitude: getLocation.coords.longitude,
-    });*/
+    });
+
+    setPlaces(data?.places);
 
     setLoadingOnes(true);
   };
@@ -124,8 +129,8 @@ const Map: React.FC = () => {
             ? {
                 latitude: getLocation.coords.latitude,
                 longitude: getLocation.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
+                latitudeDelta: zoom,
+                longitudeDelta: zoom,
               }
             : undefined
         }
@@ -134,8 +139,8 @@ const Map: React.FC = () => {
             ? {
                 latitude: getLocation.coords.latitude,
                 longitude: getLocation.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
+                latitudeDelta: zoom,
+                longitudeDelta: zoom,
               }
             : undefined
         }
@@ -209,6 +214,44 @@ const Map: React.FC = () => {
             }}
           />
         )*/}
+
+        {/**  All the places around generated */}
+        {places.length > 0 ? (
+          <>
+            {places.map((itemPlace: any, index) => (
+              <Marker
+                key={`place_marker_${index}`}
+                coordinate={{
+                  latitude: itemPlace?.location?.lat,
+                  longitude: itemPlace?.location?.lng,
+                }}
+                title={itemPlace?.name}
+                pinColor={itemPlace?.icon_background_color}
+              >
+                <View style={styles.placeMarker}>
+                  <Image
+                    source={{ uri: itemPlace?.icon }}
+                    style={styles.placeMarkerImg}
+                    resizeMode="contain"
+                  />
+                </View>
+              </Marker>
+            ))}
+          </>
+        ) : (
+          <></>
+        )}
+        {/*
+          <Marker
+            coordinate={{
+              latitude: 35.3074169,
+              longitude: -80.73521219999999,
+            }}
+            title="Destination"
+            description="Final destination"
+            pinColor={Colors.purple}
+          />
+        */}
       </MapView>
       <View style={styles.bottomNav}>
         <TouchableOpacity
@@ -291,6 +334,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     shadowOffset: { width: 0, height: 2 },
+  },
+  placeMarker: {
+    backgroundColor: Colors.blue_dark,
+    padding: 5,
+    borderRadius: 24,
+  },
+  placeMarkerImg: {
+    width: 20,
+    height: 20,
+    tintColor: Colors.purple,
+  },
+  placesContainer: {
+    padding: 500,
   },
 });
 
