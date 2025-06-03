@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Coordinates } from "./../interfaces";
 import Constants from "expo-constants";
 import { api } from "./../providers/api";

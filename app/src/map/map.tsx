@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -9,29 +9,58 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { LeafletView } from "react-native-leaflet-view";
-import { useLocation } from "../../providers/location";
-import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
-import { mapCustomStyle, Colors } from "../../global";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapViewDirections from "react-native-maps-directions";
 import { Ionicons } from "@expo/vector-icons";
 import { GoogleMaps } from "./../../services";
 import { CustomModal } from "../../resources";
+import { useLocation } from "../../providers/location";
+import { mapCustomStyle, Colors } from "../../global";
+import Constants from "expo-constants";
 
 const Map: React.FC = () => {
   const router = useRouter();
   const getLocation: any = useLocation();
+  const apiKey = Constants.expoConfig?.extra?.GOOGLE_API_KEY;
   const [search, setSearch] = useState("");
   const [loadingInitialModel, setloadingInitialModel] = useState(true);
   const [loadingOnes, setLoadingOnes] = useState(true);
+  const [zoom, setZoom] = useState(0.01);
+  const mapRef = useRef<MapView>(null);
+
+  const animateZoom = (newZoom: number) => {
+    if (mapRef.current && getLocation?.coords) {
+      mapRef.current.animateCamera(
+        {
+          center: {
+            latitude: getLocation.coords.latitude,
+            longitude: getLocation.coords.longitude,
+          },
+          zoom: newZoom,
+          altitude: newZoom * 2,
+        },
+        { duration: 1000 }
+      );
+    }
+  };
 
   const placesNearby = async () => {
     if (!getLocation?.coords)
       return Alert.alert("We couldn't get your current location");
 
-    const data = await GoogleMaps.placesNearby({
+    console.log(
+      {
+        latitude: getLocation.coords.latitude,
+        longitude: getLocation.coords.longitude,
+      },
+      "CURRENT COORDS"
+    );
+    animateZoom(12);
+
+    /*const data = await GoogleMaps.placesNearby({
       latitude: getLocation.coords.latitude,
       longitude: getLocation.coords.longitude,
-    });
+    });*/
 
     setLoadingOnes(true);
   };
@@ -61,6 +90,8 @@ const Map: React.FC = () => {
         onClose={() => setLoadingOnes(false)}
         timeout={3000}
       />
+
+      {/**  Search One */}
       <View style={styles.searchBarContainer}>
         <TextInput
           style={styles.searchBar}
@@ -70,7 +101,10 @@ const Map: React.FC = () => {
           placeholderTextColor={Colors.gray}
         />
       </View>
+
       <MapView
+        ref={mapRef}
+        showsBuildings
         style={styles.map}
         provider={PROVIDER_GOOGLE}
         initialRegion={
@@ -97,7 +131,41 @@ const Map: React.FC = () => {
         zoomEnabled={true}
         zoomControlEnabled={false}
         customMapStyle={mapCustomStyle}
-      />
+      >
+        {/**  Show this when we wanna go that place chose */}
+        {/*getLocation?.coords && (
+          <MapViewDirections
+            strokeColor={Colors.purple}
+            strokeWidth={5}
+            origin={{
+              latitude: getLocation.coords.latitude,
+              longitude: getLocation.coords.longitude,
+            }}
+            destination={{
+              latitude: 35.74753,
+              longitude: -81.194394,
+            }}
+            apikey={apiKey}
+            onReady={(result) => {
+              // This will fit the map to the route with padding
+              mapRef.current?.fitToCoordinates(result.coordinates, {
+                edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
+                animated: true,
+              });
+            }}
+          />
+        )
+        <Marker
+          coordinate={{
+            latitude: 35.74753,
+            longitude: -81.194394,
+          }}
+          title="Destination"
+          description="Final destination"
+          pinColor={Colors.purple}
+        />
+        */}
+      </MapView>
       <View style={styles.bottomNav}>
         <TouchableOpacity
           style={styles.navItem}
