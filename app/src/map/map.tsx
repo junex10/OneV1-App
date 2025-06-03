@@ -61,12 +61,12 @@ const Map: React.FC = () => {
     );
     animateZoom(12);
 
-    const data = await GoogleMaps.placesNearby({
+    /*const data = await GoogleMaps.placesNearby({
       latitude: getLocation.coords.latitude,
       longitude: getLocation.coords.longitude,
     });
 
-    setPlaces(data?.places);
+    setPlaces(data?.places);*/
 
     setLoadingOnes(true);
   };
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   placeMarker: {
-    backgroundColor: Colors.blue_dark,
+    backgroundColor: Colors.blue_dark_2,
     padding: 5,
     borderRadius: 24,
   },
