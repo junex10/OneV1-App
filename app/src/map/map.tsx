@@ -35,7 +35,7 @@ const Map: React.FC = () => {
   const [zoom, setZoom] = useState(0.01);
   const [showDirection, setShowDirection] = useState<boolean>(false); // -> Show message about go to a place
   const [hasArrived, setHasArrived] = useState(false);
-  const [currentPlace, setCurrentPlace] = useState(null); // -> will store the place selected to ride
+  const [currentPlace, setCurrentPlace] = useState<any>(null); // -> will store the place selected to ride
   const [currentRide, setCurrentRide] = useState(false); // -> will indicate whenever you're on the road to currentPlace
   const [showArrivedModal, setShowArrivedModal] = useState(false);
 
@@ -102,9 +102,10 @@ const Map: React.FC = () => {
   };
 
   const getEvent = async (eventData: any) => {
+    setCurrentRide(false); // -> We set in false to show normal map
     setShowDirection(true);
+    setHasArrived(false);
     setCurrentPlace(eventData);
-    console.log(eventData);
   };
 
   const acceptRide = async (ride: boolean) => {
@@ -113,6 +114,7 @@ const Map: React.FC = () => {
       // We remove the path and final destination
       setCurrentPlace(null);
       setHasArrived(true);
+      setCurrentRide(false);
 
       // We restart the zoom
       animateZoom(defaultZoom);
@@ -245,8 +247,8 @@ const Map: React.FC = () => {
               longitude: getLocation.coords.longitude,
             }}
             destination={{
-              latitude: 35.74753,
-              longitude: -81.194394,
+              latitude: Number(currentPlace?.latitude),
+              longitude: Number(currentPlace?.longitude),
             }}
             apikey={apiKey}
             onReady={(result) => {
@@ -264,17 +266,18 @@ const Map: React.FC = () => {
           getDistanceFromLatLonInMeters(
             getLocation.coords.latitude,
             getLocation.coords.longitude,
-            35.74753,
-            -81.194394
+            Number(currentPlace?.latitude),
+            Number(currentPlace?.longitude)
           ) > meterThreshold && ( // 10 meters threshold
             <Marker
               coordinate={{
-                latitude: 35.74753,
-                longitude: -81.194394,
+                latitude: Number(currentPlace?.latitude),
+                longitude: Number(currentPlace?.longitude),
               }}
               title="Destination"
               description="Final destination"
               pinColor={Colors.purple}
+              zIndex={999}
             />
           )}
 
@@ -289,8 +292,8 @@ const Map: React.FC = () => {
               longitude: getLocation.coords.longitude,
             }}
             destination={{
-              latitude: 35.74753,
-              longitude: -81.194394,
+              latitude: Number(currentPlace?.latitude),
+              longitude: Number(currentPlace?.longitude),
             }}
             apikey={apiKey}
             onReady={(result) => {
@@ -312,7 +315,7 @@ const Map: React.FC = () => {
         )}
 
         {/**  All the places around generated */}
-        {events.length > 0 ? (
+        {events.length > 0 && (
           <>
             {events.map((itemPlace: any, index) => (
               <Marker
@@ -343,8 +346,6 @@ const Map: React.FC = () => {
               </Marker>
             ))}
           </>
-        ) : (
-          <></>
         )}
         {/*
           <Marker
@@ -361,7 +362,7 @@ const Map: React.FC = () => {
       {showDirection && (
         <View style={styles.destinationConfirm}>
           <Text style={styles.destinationConfirmText}>
-            Are you sure you want to go to this final destination?
+            Are you sure you want to go to this one place?
           </Text>
           <View style={styles.destinationConfirmButtons}>
             <TouchableOpacity
