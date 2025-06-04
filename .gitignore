@@ -36,3 +36,4 @@ yarn-error.*
 
 .env
 assets/resources/
+app.json
