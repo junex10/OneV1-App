@@ -116,7 +116,7 @@ const Map: React.FC = () => {
       setCurrentPlace(null);
       setHasArrived(true);
       setCurrentRide(false);
-
+      setEvents([]);
       // We restart the zoom
       animateZoom(defaultZoom);
 
@@ -148,8 +148,8 @@ const Map: React.FC = () => {
       getDistanceFromLatLonInMeters(
         getLocation.coords.latitude,
         getLocation.coords.longitude,
-        35.74753,
-        -81.194394
+        Number(currentPlace?.latitude),
+        Number(currentPlace?.longitude)
       ) <= meterThreshold // 10 meters threshold
     ) {
       // We have to reset the values once the user arrives
@@ -160,6 +160,11 @@ const Map: React.FC = () => {
       setCurrentPlace(null); // -> Current place
       setCurrentRide(false); // -> We set in false to show normal map
       setShowDirection(false); // -> We close the direction
+
+      const removingEvents = events.filter(
+        (item: any) => item?.id == currentPlace?.id
+      );
+      setEvents(removingEvents); // -> We remove every other marker but the one selected
 
       animateZoom(defaultZoom);
     }
