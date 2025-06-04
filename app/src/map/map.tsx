@@ -274,8 +274,8 @@ const Map: React.FC = () => {
                 latitude: Number(currentPlace?.latitude),
                 longitude: Number(currentPlace?.longitude),
               }}
-              title="Destination"
-              description="Final destination"
+              title={currentPlace?.content}
+              description={currentPlace?.likes.toString()}
               pinColor={Colors.purple}
               zIndex={999}
             />
@@ -331,7 +331,7 @@ const Map: React.FC = () => {
                 <View style={styles.placeMarker}>
                   {itemPlace?.main_pic ? (
                     <Image
-                      source={{ uri: itemPlace?.icon }}
+                      source={{ uri: itemPlace?.main_pic }}
                       style={styles.placeMarkerImg}
                       resizeMode="contain"
                     />
@@ -347,17 +347,6 @@ const Map: React.FC = () => {
             ))}
           </>
         )}
-        {/*
-          <Marker
-            coordinate={{
-              latitude: 35.3074169,
-              longitude: -80.73521219999999,
-            }}
-            title="Destination"
-            description="Final destination"
-            pinColor={Colors.purple}
-          />
-        */}
       </MapView>
       {showDirection && (
         <View style={styles.destinationConfirm}>
@@ -473,7 +462,6 @@ const styles = StyleSheet.create({
   placeMarkerImg: {
     width: 20,
     height: 20,
-    tintColor: Colors.purple,
   },
   placesContainer: {
     padding: 500,
