@@ -33,7 +33,7 @@ const Map: React.FC = () => {
   const [heading, setHeading] = useState(0);
   const [events, setEvents] = useState([]);
   const [zoom, setZoom] = useState(0.01);
-  const [showDirection, setShowDirection] = useState<boolean>(true);
+  const [showDirection, setShowDirection] = useState<boolean>(false); // -> Show message about go to a place
   const [hasArrived, setHasArrived] = useState(false);
   const [currentPlace, setCurrentPlace] = useState(null); // -> will store the place selected to ride
   const [currentRide, setCurrentRide] = useState(false); // -> will indicate whenever you're on the road to currentPlace
@@ -236,7 +236,7 @@ const Map: React.FC = () => {
         customMapStyle={mapCustomStyle}
       >
         {/**  Show this when we wanna go that place chose */}
-        {!hasArrived && getLocation?.coords && (
+        {currentPlace && !hasArrived && getLocation?.coords && (
           <MapViewDirections
             strokeColor={Colors.purple}
             strokeWidth={5}
@@ -258,7 +258,8 @@ const Map: React.FC = () => {
             }}
           />
         )}
-        {!hasArrived &&
+        {currentPlace &&
+          !hasArrived &&
           getLocation?.coords &&
           getDistanceFromLatLonInMeters(
             getLocation.coords.latitude,
