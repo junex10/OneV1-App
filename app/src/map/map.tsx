@@ -15,7 +15,7 @@ import MapViewDirections from "react-native-maps-directions";
 import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
 import { GoogleMaps } from "./../../services";
-import { CustomModal } from "../../resources";
+import { CustomModal, Storage } from "../../resources";
 import { useLocation } from "../../providers/location";
 import { mapCustomStyle, Colors } from "../../global";
 import Constants from "expo-constants";
@@ -39,6 +39,7 @@ const Map: React.FC = () => {
   const [currentRide, setCurrentRide] = useState(false); // -> will indicate whenever you're on the road to currentPlace
   const [showArrivedModal, setShowArrivedModal] = useState(false);
   const [currentEvent, setCurrentEvent] = useState(null);
+  const [user, setUser] = useState(null);
 
   const mapRef = useRef<MapView>(null);
 
@@ -134,6 +135,13 @@ const Map: React.FC = () => {
       subscription = await Location.watchHeadingAsync((data) => {
         setHeading(data.trueHeading ?? data.magHeading ?? 0);
       });
+    })();
+
+    // We verify if we have logged in
+
+    (async () => {
+      const getUser = await Storage.get("user"); // -> We may update this later
+      setUser(getUser);
     })();
 
     if (!getLocation?.coords)
@@ -400,6 +408,15 @@ const Map: React.FC = () => {
           <TouchableOpacity style={styles.navItem} onPress={placesNearby}>
             <Ionicons name="diamond-outline" size={28} color={Colors.purple} />
             <Text style={styles.navLabel}>Event</Text>
+          </TouchableOpacity>
+        )}
+        {!user && (
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.push("/src/login/login")}
+          >
+            <Ionicons name="log-out-outline" size={28} color={Colors.purple} />
+            <Text style={styles.navLabel}>Log in</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
