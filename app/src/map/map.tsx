@@ -38,6 +38,7 @@ const Map: React.FC = () => {
   const [currentPlace, setCurrentPlace] = useState<any>(null); // -> will store the place selected to ride
   const [currentRide, setCurrentRide] = useState(false); // -> will indicate whenever you're on the road to currentPlace
   const [showArrivedModal, setShowArrivedModal] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState(null);
 
   const mapRef = useRef<MapView>(null);
 
@@ -152,6 +153,7 @@ const Map: React.FC = () => {
       ) <= meterThreshold // 10 meters threshold
     ) {
       // We have to reset the values once the user arrives
+      setCurrentEvent(currentPlace); // -> We store the current event for future references
       setHasArrived(true);
       setShowArrivedModal(true);
 
@@ -384,6 +386,17 @@ const Map: React.FC = () => {
           <Ionicons name="location-outline" size={28} color={Colors.purple} />
           <Text style={styles.navLabel}>One</Text>
         </TouchableOpacity>
+        {currentEvent ? (
+          <TouchableOpacity style={styles.navItem} onPress={placesNearby}>
+            <Ionicons name="add-outline" size={28} color={Colors.purple} />
+            <Text style={styles.navLabel}>New</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.navItem} onPress={placesNearby}>
+            <Ionicons name="diamond-outline" size={28} color={Colors.purple} />
+            <Text style={styles.navLabel}>Event</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => router.push("/profile")}
