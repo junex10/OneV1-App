@@ -1,28 +1,44 @@
-import { Stack } from 'expo-router';
-import Providers from './providers';
+import { Stack } from "expo-router";
+import Providers from "./providers";
 
-const LOGIN = 'src/login/';
-const MAP = 'src/map/';
+const LOGIN = "src/login/";
+const MAP = "src/map/";
 
 export default function RootLayout() {
-    return (
-        <Providers>
-            <Stack
-                screenOptions={{
-                    headerShown: false,
-                }}
-            >
-                <Stack.Screen name="index" />
+  return (
+    <Providers>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="index" />
 
-                {/* Login */}
-                <Stack.Screen name={`${LOGIN}login`} options={{ title: 'Login', headerShown: true }}  />
-                <Stack.Screen name={`${LOGIN}create-account`} options={{ title: 'CreateAccount', headerShown: true }}  />
+        {/* Login */}
+        <Stack.Screen
+          name={`${LOGIN}login`}
+          options={{ title: "Login", headerShown: true }}
+        />
+        <Stack.Screen
+          name={`${LOGIN}create-account/create-account`}
+          options={{ title: "CreateAccount", headerShown: false }}
+        />
+        <Stack.Screen
+          name={`${LOGIN}create-account/upload-photo`}
+          options={{ title: "Profile photo", headerShown: false }}
+        />
+        {/*<Stack.Screen
+          name={`${LOGIN}create-account/verify-code`}
+          options={{ title: "Verify code", headerShown: false }}
+        />*/}
 
-                { /** MAP */}
+        {/** MAP */}
 
-                <Stack.Screen name={`${MAP}map`} options={{ title: 'Map', headerShown: false }}  />
-
-            </Stack>
-        </Providers>
-    )
+        <Stack.Screen
+          name={`${MAP}map`}
+          options={{ title: "Map", headerShown: false }}
+        />
+      </Stack>
+    </Providers>
+  );
 }
