@@ -11,6 +11,7 @@ import { Colors } from "../../../global";
 import { useRouter } from "expo-router";
 import { useLocalSearchParams } from "expo-router";
 import { Auth } from "../../../services";
+import { Storage } from "../../../resources";
 
 const CODE_LENGTH = 6;
 
@@ -51,9 +52,10 @@ const VerifyCode: React.FC = () => {
 
   const handleConfirm = async () => {
     const data = await Auth.verifyUser(Number(code.join("")));
-    console.log(Number(code.join("")), " HERE  I AM ");
-    // Add your code confirmation logic here
-    // Example: router.replace("/src/map/map");
+    if (data?.message) {
+      Storage.set("user", getUser);
+      router.replace("/src/map/map");
+    }
   };
 
   return (

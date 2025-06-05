@@ -33,6 +33,18 @@ const Auth = {
       throw error;
     }
   },
+  verifyNewAccount: async (request: any) => {
+    try {
+      const response = await api.post(
+        `${API}app/auth/verify-new-account`,
+        request
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
 };
 
 export default Auth;

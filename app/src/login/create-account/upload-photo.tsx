@@ -79,7 +79,7 @@ const UploadPhoto: React.FC = () => {
       router.push({
         pathname: "/src/login/create-account/verify-code",
         params: {
-          user: JSON.stringify(data),
+          user: JSON.stringify(newUser),
         },
       });
     } else {
