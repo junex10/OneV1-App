@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Keyboard,
 } from "react-native";
-import { Colors } from "../../../global";
+import { Colors } from "./../../../resources/global";
 import { useRouter } from "expo-router";
 import { useLocalSearchParams } from "expo-router";
 import { Auth } from "../../../services";

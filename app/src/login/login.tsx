@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useState, useRef } from "react";
-import { Colors } from "./../../global";
+import { Colors } from "./../../resources/global";
 
 const Login: React.FC = () => {
   const router = useRouter();

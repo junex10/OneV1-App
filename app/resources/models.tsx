@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../global";
+import { Colors } from "./../resources/global";
 
 interface CustomModalProps {
   visible: boolean;

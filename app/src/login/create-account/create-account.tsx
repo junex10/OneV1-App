@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
-import { Colors } from "../../../global";
+import { Colors } from "./../../../resources/global";
 import { Auth } from "../../../services";
 import { CustomModal } from "../../../resources";
 

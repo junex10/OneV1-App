@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Colors } from "../../../global";
+import { Colors } from "./../../../resources/global";
 import { useLocalSearchParams } from "expo-router";
 import { Auth } from "../../../services";
 

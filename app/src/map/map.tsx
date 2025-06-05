@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { GoogleMaps } from "./../../services";
 import { CustomModal, Storage } from "../../resources";
 import { useLocation } from "../../providers/location";
-import { mapCustomStyle, Colors } from "../../global";
+import { mapCustomStyle, Colors } from "./../../resources/global";
 import Constants from "expo-constants";
 
 const Map: React.FC = () => {
