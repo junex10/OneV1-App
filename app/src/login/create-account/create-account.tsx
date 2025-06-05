@@ -9,6 +9,7 @@ import {
   Animated,
   Alert,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons"; // Add this import
 import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
 import { Colors } from "./../../../resources/global";
@@ -26,11 +27,18 @@ const CreateAccount: React.FC = () => {
   const [error, setError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<any>(null);
 
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [usernameFocused, setUsernameFocused] = useState(false);
+  const [phoneFocused, setPhoneFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
+
   // Animation refs
   const emailAnim = useRef(new Animated.Value(1)).current;
   const usernameAnim = useRef(new Animated.Value(1)).current;
   const phoneAnim = useRef(new Animated.Value(1)).current;
   const passwordAnim = useRef(new Animated.Value(1)).current;
+  const confirmPasswordAnim = useRef(new Animated.Value(1)).current;
 
   const animateInput = (animRef: Animated.Value, toValue: number) => {
     Animated.spring(animRef, {
@@ -130,74 +138,182 @@ const CreateAccount: React.FC = () => {
 
       <Text style={styles.title}>Create Account</Text>
       <Animated.View
-        style={{ transform: [{ scale: emailAnim }], width: "100%" }}
+        style={[
+          { transform: [{ scale: emailAnim }], width: "100%" },
+          styles.inputWrapper,
+          emailFocused && styles.inputWrapperFocused,
+        ]}
       >
+        <Ionicons
+          name="mail-outline"
+          size={20}
+          color={emailFocused ? Colors.purple : "#aaa"}
+          style={styles.inputIcon}
+        />
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              color: emailFocused ? Colors.blue_dark : Colors.gray,
+            },
+          ]}
           placeholder="Email"
           placeholderTextColor="#aaa"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
-          onFocus={() => animateInput(emailAnim, 1.05)}
-          onBlur={() => animateInput(emailAnim, 1)}
+          onFocus={() => {
+            animateInput(emailAnim, 1.05);
+            setEmailFocused(true);
+          }}
+          onBlur={() => {
+            animateInput(emailAnim, 1);
+            setEmailFocused(false);
+          }}
         />
       </Animated.View>
       <Animated.View
-        style={{ transform: [{ scale: usernameAnim }], width: "100%" }}
+        style={[
+          { transform: [{ scale: usernameAnim }], width: "100%" },
+          styles.inputWrapper,
+          usernameFocused && styles.inputWrapperFocused,
+        ]}
       >
+        <Ionicons
+          name="person-outline"
+          size={20}
+          color={usernameFocused ? Colors.purple : "#aaa"}
+          style={styles.inputIcon}
+        />
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              color: usernameFocused ? Colors.blue_dark : Colors.gray,
+            },
+          ]}
           placeholder="Username"
           placeholderTextColor="#aaa"
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
-          onFocus={() => animateInput(usernameAnim, 1.05)}
-          onBlur={() => animateInput(usernameAnim, 1)}
+          onFocus={() => {
+            animateInput(usernameAnim, 1.05);
+            setUsernameFocused(true);
+          }}
+          onBlur={() => {
+            animateInput(usernameAnim, 1);
+            setUsernameFocused(false);
+          }}
         />
       </Animated.View>
+
       <Animated.View
-        style={{ transform: [{ scale: phoneAnim }], width: "100%" }}
+        style={[
+          { transform: [{ scale: phoneAnim }], width: "100%" },
+          styles.inputWrapper,
+          phoneFocused && styles.inputWrapperFocused,
+        ]}
       >
+        <Ionicons
+          name="call-outline"
+          size={20}
+          color={phoneFocused ? Colors.purple : "#aaa"}
+          style={styles.inputIcon}
+        />
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              color: phoneFocused ? Colors.blue_dark : Colors.gray,
+            },
+          ]}
           placeholder="Phone"
           placeholderTextColor="#aaa"
           value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-          onFocus={() => animateInput(phoneAnim, 1.05)}
-          onBlur={() => animateInput(phoneAnim, 1)}
+          onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ""))}
+          keyboardType="numeric"
+          onFocus={() => {
+            animateInput(phoneAnim, 1.05);
+            setPhoneFocused(true);
+          }}
+          onBlur={() => {
+            animateInput(phoneAnim, 1);
+            setPhoneFocused(false);
+          }}
         />
       </Animated.View>
+
       <Animated.View
-        style={{ transform: [{ scale: passwordAnim }], width: "100%" }}
+        style={[
+          { transform: [{ scale: passwordAnim }], width: "100%" },
+          styles.inputWrapper,
+          passwordFocused && styles.inputWrapperFocused,
+        ]}
       >
+        <Ionicons
+          name="lock-closed-outline"
+          size={20}
+          color={passwordFocused ? Colors.purple : "#aaa"}
+          style={styles.inputIcon}
+        />
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              color: passwordFocused ? Colors.blue_dark : Colors.gray,
+            },
+          ]}
           placeholder="Password"
           placeholderTextColor="#aaa"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          onFocus={() => animateInput(passwordAnim, 1.05)}
-          onBlur={() => animateInput(passwordAnim, 1)}
+          onFocus={() => {
+            animateInput(passwordAnim, 1.05);
+            setPasswordFocused(true);
+          }}
+          onBlur={() => {
+            animateInput(passwordAnim, 1);
+            setPasswordFocused(false);
+          }}
         />
       </Animated.View>
+
       <Animated.View
-        style={{ transform: [{ scale: passwordAnim }], width: "100%" }}
+        style={[
+          { transform: [{ scale: confirmPasswordAnim }], width: "100%" },
+          styles.inputWrapper,
+          confirmPasswordFocused && styles.inputWrapperFocused,
+        ]}
       >
+        <Ionicons
+          name="lock-closed-outline"
+          size={20}
+          color={confirmPasswordFocused ? Colors.purple : "#aaa"}
+          style={styles.inputIcon}
+        />
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              color: confirmPasswordFocused ? Colors.blue_dark : Colors.gray,
+            },
+          ]}
           placeholder="Confirm password"
           placeholderTextColor="#aaa"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
-          onFocus={() => animateInput(passwordAnim, 1.05)}
-          onBlur={() => animateInput(passwordAnim, 1)}
+          onFocus={() => {
+            animateInput(confirmPasswordAnim, 1.05);
+            setConfirmPasswordFocused(true);
+          }}
+          onBlur={() => {
+            animateInput(confirmPasswordAnim, 1);
+            setConfirmPasswordFocused(false);
+          }}
         />
       </Animated.View>
       <TouchableOpacity style={styles.createBtn} onPress={handleSaveAccount}>
@@ -225,15 +341,33 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 32,
   },
-  input: {
-    width: "100%",
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.blue_dark,
-    color: "#fff",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginBottom: 18,
+    borderWidth: 2,
+    borderColor: "transparent",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  inputWrapperFocused: {
+    borderColor: Colors.purple,
+    backgroundColor: "#fff1fa",
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    color: Colors.blue_dark,
     fontSize: 16,
-    marginBottom: 16,
+    paddingVertical: 14,
+    backgroundColor: "transparent",
   },
   createBtn: {
     width: "100%",

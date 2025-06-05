@@ -46,6 +46,9 @@ const VerifyCode: React.FC = () => {
 
   const handleKeyPress = (e: any, idx: number) => {
     if (e.nativeEvent.key === "Backspace" && !code[idx] && idx > 0) {
+      const newCode = [...code];
+      newCode[idx - 1] = "";
+      setCode(newCode);
       inputs.current[idx - 1]?.focus();
     }
   };

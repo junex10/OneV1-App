@@ -99,6 +99,9 @@ const UploadPhoto: React.FC = () => {
         </View>
       </TouchableOpacity>
       <Text style={styles.infoText}>Tap the photo to upload a new one</Text>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <Text style={styles.backBtnText}>Back</Text>
+      </TouchableOpacity>
       <TouchableOpacity
         style={[
           styles.nextBtn,
@@ -118,6 +121,22 @@ const UploadPhoto: React.FC = () => {
 const PIC_SIZE = 160;
 
 const styles = StyleSheet.create({
+  backBtn: {
+    position: "absolute",
+    bottom: 100,
+    left: 32,
+    right: 32,
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: Colors.purple,
+    marginBottom: 16,
+  },
+  backBtnText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.blue_dark_2,
