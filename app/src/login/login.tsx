@@ -123,7 +123,9 @@ const Login: React.FC = () => {
       </TouchableOpacity>
       <View style={styles.linksContainer}>
         <TouchableOpacity
-          onPress={() => router.push("/src/login/forgot-password")}
+          onPress={() =>
+            router.push("/src/login/create-account/forgot-password")
+          }
         >
           <Text style={styles.link}>Forgot password?</Text>
         </TouchableOpacity>

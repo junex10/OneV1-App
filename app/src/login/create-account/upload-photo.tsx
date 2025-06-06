@@ -67,10 +67,6 @@ const UploadPhoto: React.FC = () => {
       type: fileType,
     } as any);
 
-    const data = {
-      ...getUser,
-      photo: photo || DEFAULT_PIC,
-    };
     // You can pass the photo URI to the next screen here
 
     const newUser = await Auth.newUser(formData);
