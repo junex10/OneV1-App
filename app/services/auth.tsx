@@ -13,6 +13,15 @@ interface NewUser {
 }
 
 const Auth = {
+  login: async (request: any) => {
+    try {
+      const response = await api.post(`${API}app/auth/login`, request);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
   newUser: async (request: FormData) => {
     try {
       const response = await api.post(`${API}app/auth/register`, request, {

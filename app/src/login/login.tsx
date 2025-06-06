@@ -11,6 +11,8 @@ import { useRouter } from "expo-router";
 import { useState, useRef } from "react";
 import { Colors } from "./../../resources/global";
 import { Ionicons } from "@expo/vector-icons";
+import { Auth } from "../../services";
+import { Storage } from "../../resources";
 
 const Login: React.FC = () => {
   const router = useRouter();
@@ -32,9 +34,15 @@ const Login: React.FC = () => {
     }).start();
   };
 
-  const handleLogin = () => {
-    // Add your login logic here
-    // Example: router.replace('/src/map/map');
+  const handleLogin = async () => {
+    const user = await Auth.login({
+      username,
+      password,
+    });
+    if (user?.data) {
+      Storage.set("user", user?.data);
+      router.replace("/src/map/map");
+    }
   };
 
   return (
