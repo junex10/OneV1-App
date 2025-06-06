@@ -3,6 +3,7 @@ import Providers from "./providers";
 
 const LOGIN = "src/login/";
 const MAP = "src/map/";
+const PROFILE = "src/profile/";
 
 export default function RootLayout() {
   return (
@@ -27,16 +28,23 @@ export default function RootLayout() {
           name={`${LOGIN}create-account/upload-photo`}
           options={{ title: "Profile photo", headerShown: false }}
         />
-        {/*<Stack.Screen
+        <Stack.Screen
           name={`${LOGIN}create-account/verify-code`}
           options={{ title: "Verify code", headerShown: false }}
-        />*/}
+        />
 
         {/** MAP */}
 
         <Stack.Screen
           name={`${MAP}map`}
           options={{ title: "Map", headerShown: false }}
+        />
+
+        {/** PROFILE */}
+
+        <Stack.Screen
+          name={`${PROFILE}profile`}
+          options={{ title: "Profile", headerShown: false }}
         />
       </Stack>
     </Providers>

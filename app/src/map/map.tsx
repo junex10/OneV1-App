@@ -421,7 +421,7 @@ const Map: React.FC = () => {
         )}
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => router.push("/profile")}
+          onPress={() => router.push("/src/profile/profile")}
         >
           <Ionicons name="person-outline" size={28} color={Colors.purple} />
           <Text style={styles.navLabel}>Profile</Text>
