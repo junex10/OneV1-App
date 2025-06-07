@@ -14,7 +14,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
-import { GoogleMaps } from "./../../services";
+import { GoogleMaps, Events } from "./../../services";
 import { CustomModal, Storage } from "../../resources";
 import { useLocation } from "../../providers/location";
 import { mapCustomStyle, Colors } from "./../../resources/global";
@@ -72,7 +72,7 @@ const Map: React.FC = () => {
     );
     animateZoom(12);
 
-    const data = await GoogleMaps.getEvents({
+    const data = await Events.getEvents({
       latitude: getLocation.coords.latitude,
       longitude: getLocation.coords.longitude,
     });

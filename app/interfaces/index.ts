@@ -1,5 +1,4 @@
 import { Coordinates } from "./google.interface";
+import { SetEventDTO } from "./event.interface";
 
-export {
-    Coordinates
-}
+export { Coordinates, SetEventDTO };
