@@ -128,18 +128,18 @@ const Profile: React.FC = () => {
           <Text style={styles.username}>{user.username}</Text>
           <Text style={styles.email}>{user.email}</Text>
           <View style={styles.addressRow}>
-            <Ionicons
+            {/* <Ionicons
               name="location-outline"
               size={15}
               color={Colors.purple}
               style={{ marginRight: 4 }}
             />
-            <Text style={styles.address}>{user.address}</Text>
+            <Text style={styles.address}>{user.address}</Text>*/}
           </View>
           <Text style={styles.subscribers}>{user.subscribers} subscribers</Text>
         </View>
       </View>
-      <TouchableOpacity
+      {/*<TouchableOpacity
         style={[
           styles.subscribeBtn,
           {
@@ -147,7 +147,7 @@ const Profile: React.FC = () => {
           },
         ]}
       >
-        <View style={styles.subscribeContent}>
+       <View style={styles.subscribeContent}>
           <Text style={styles.subscribeText}>Subscribe</Text>
           {subscribed && (
             <Ionicons
@@ -157,8 +157,8 @@ const Profile: React.FC = () => {
               style={{ marginLeft: 8 }}
             />
           )}
-        </View>
-      </TouchableOpacity>
+        </View> Add this to personal subscriber
+      </TouchableOpacity>*/}
       <View style={styles.tabs}>
         <TouchableOpacity style={styles.tab} onPress={() => setTab("events")}>
           <Text
@@ -182,7 +182,15 @@ const Profile: React.FC = () => {
           {/* First two events side by side */}
           <View style={styles.eventsRow}>
             {events.slice(0, 2).map((item) => (
-              <View style={styles.eventCardHalf} key={item.id}>
+              <View
+                style={[
+                  styles.eventCardHalf,
+                  {
+                    //backgroundColor: Colors.purple, -> Add here the current event
+                  },
+                ]}
+                key={item.id}
+              >
                 <Image source={{ uri: item.image }} style={styles.eventImage} />
                 <View style={styles.eventInfo}>
                   <Text style={styles.eventTitle}>{item.title}</Text>

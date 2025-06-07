@@ -19,7 +19,10 @@ const GoogleMaps = {
   },
   getEvents: async (coordinates: Coordinates) => {
     try {
-      const response = await api.post(`${API}app/map/getEvents`, coordinates);
+      const response = await api.post(
+        `${API}app/events/getEvents`,
+        coordinates
+      );
       return response.data;
     } catch (error) {
       console.error("Error fetching places:", error);
