@@ -7,10 +7,17 @@ import {
   TouchableOpacity,
   FlatList,
   Dimensions,
+  TextInput,
+  Alert,
 } from "react-native";
 import { Colors } from "./../../resources/global";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { CustomModal, Storage } from "../../resources";
+import { Events } from "../../services";
+import Constants from "expo-constants";
+import { ProfileService } from "./../../services";
+import * as ImagePicker from "expo-image-picker";
 
 const PROFILE_PIC_SIZE = 80;
 const { width, height } = Dimensions.get("window");
@@ -62,29 +69,108 @@ const events = [
     username: "chefjane",
   },
 ];
-
+let DEFAULT_PIC: string;
 const Profile: React.FC = () => {
+  const DEFAULT_TIMEOUT = 3000;
+
   const router = useRouter();
+  const server = Constants.expoConfig?.extra?.SERVER;
   const [tab, setTab] = useState<"events" | "settings">("events");
   const [subscribed, setSubscribe] = useState<boolean>(false); //True = subscribed, false = it isnt
   const [selectedField, setSelectedField] = useState<null | {
     label: string;
     value: string;
   }>(null);
+  const [user, setUser] = useState<any | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [success, setSuccess] = useState<boolean>(false);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [pickingPic, setPickingPic] = useState<boolean>(false);
 
-  useEffect(() => {}, [subscribed]);
+  useEffect(() => {
+    (async () => {
+      const user = await Storage.get("user");
+      setUser({
+        token: user?.token,
+        user: {
+          ...user.user,
+          photo: `${server}storage/${user.user.photo}`,
+        },
+      });
+      DEFAULT_PIC = `${server}storage/${user.user.photo}`;
+      const eventsData = await Events.getEventsByUser({
+        user_id: user.user.id,
+      });
+      if (eventsData.places) {
+        setEvents(eventsData.places.rows);
+      }
+    })();
+    if (selectedField) setInputValue(selectedField.value);
+  }, [subscribed, selectedField]);
 
-  // Example user data (replace with real user data)
-  const user = {
-    email: "user@email.com",
-    username: "junex10",
-    name: "Jose",
-    lastname: "Herrada",
-    phone: "43243242",
-    photo:
-      "https://ui-avatars.com/api/?name=Jose+Herrada&background=FD3A73&color=fff&size=256",
-    subscribers: 128,
-    address: "456 Main Ave, Springfield",
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Only allow images
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const selected = result.assets[0];
+      if (selected.type && selected.type.startsWith("image")) {
+        setPhoto(selected.uri);
+        setPickingPic(true); // We show the button to update only the picture
+      } else {
+        Alert.alert("Only images are allowed.");
+      }
+    }
+  };
+
+  const handleProfileSave = async () => {
+    console.log(selectedField, inputValue, " FIELD ");
+    const formData = new FormData();
+
+    let fileType = "image/jpeg";
+
+    if (pickingPic) {
+      if (photo?.endsWith(".png")) fileType = "image/png";
+      else if (photo?.endsWith(".jpg") || photo?.endsWith(".jpeg"))
+        fileType = "image/jpeg";
+      else if (photo?.endsWith(".webp")) fileType = "image/webp";
+      else fileType = "image/*";
+
+      formData.append("photo", {
+        uri: photo,
+        name: "photo",
+        type: fileType,
+      } as any);
+    }
+
+    formData.append("id", user?.user?.id);
+
+    switch (selectedField?.label) {
+      case "email":
+        formData.append("email", inputValue);
+        break;
+      case "name":
+        formData.append("name", inputValue);
+        break;
+      case "lastname":
+        formData.append("lastname", inputValue);
+        break;
+      case "phone":
+        formData.append("phone", inputValue);
+        break;
+    }
+
+    const updated = await ProfileService.update(formData);
+    if (updated?.data) {
+      Storage.set("user", updated?.data);
+      setSuccess(true);
+      setSelectedField(null);
+    }
   };
 
   if (selectedField) {
@@ -99,13 +185,20 @@ const Profile: React.FC = () => {
         </TouchableOpacity>
         <View style={styles.fieldEdit}>
           <View style={styles.editFieldRow}>
-            <Text style={styles.editFieldValue}>{selectedField.value}</Text>
+            <TextInput
+              style={styles.editFieldValue}
+              value={inputValue}
+              onChangeText={setInputValue}
+              placeholder={selectedField.label}
+              placeholderTextColor="#aaa"
+              autoFocus
+            />
           </View>
         </View>
         <TouchableOpacity
           style={styles.saveBtn}
           activeOpacity={0.8}
-          onPress={() => setSelectedField(null)}
+          onPress={handleProfileSave}
         >
           <Text style={styles.saveBtnText}>Save</Text>
         </TouchableOpacity>
@@ -115,6 +208,15 @@ const Profile: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {success && (
+        <CustomModal
+          visible={success}
+          title="Profile updated!"
+          message={"The profile has been update sucessfully!"}
+          onClose={() => setSuccess(false)}
+          timeout={DEFAULT_TIMEOUT}
+        />
+      )}
       <TouchableOpacity
         onPress={() => router.back()}
         style={styles.backBtn}
@@ -123,21 +225,44 @@ const Profile: React.FC = () => {
         <Ionicons name="arrow-back" size={22} color="#fff" />
       </TouchableOpacity>
       <View style={styles.header}>
-        <Image source={{ uri: user.photo }} style={styles.photo} />
-        <View style={styles.info}>
-          <Text style={styles.username}>{user.username}</Text>
-          <Text style={styles.email}>{user.email}</Text>
-          <View style={styles.addressRow}>
-            {/* <Ionicons
+        {tab !== "settings" ? (
+          <>
+            <Image
+              source={{
+                uri: user?.user?.photo,
+              }}
+              style={styles.photo}
+            />
+            <View style={styles.info}>
+              <Text style={styles.username}>
+                {user?.user?.person?.username}
+              </Text>
+              <Text style={styles.email}>{user?.user?.email}</Text>
+              <View style={styles.addressRow}>
+                {/* <Ionicons
               name="location-outline"
               size={15}
               color={Colors.purple}
               style={{ marginRight: 4 }}
             />
             <Text style={styles.address}>{user.address}</Text>*/}
-          </View>
-          <Text style={styles.subscribers}>{user.subscribers} subscribers</Text>
-        </View>
+              </View>
+              <Text style={styles.subscribers}>
+                {user?.person?.subscribers
+                  ? Number(user?.user?.person?.subscribers)
+                  : 0}{" "}
+                subscribers
+              </Text>
+            </View>
+          </>
+        ) : (
+          <TouchableOpacity style={styles.picContainer} onPress={pickImage}>
+            <Image source={{ uri: photo || DEFAULT_PIC }} style={styles.pic} />
+            <View style={styles.cameraIconContainer}>
+              <Text style={styles.cameraIcon}>📷</Text>
+            </View>
+          </TouchableOpacity>
+        )}
       </View>
       {/*<TouchableOpacity
         style={[
@@ -160,7 +285,13 @@ const Profile: React.FC = () => {
         </View> Add this to personal subscriber
       </TouchableOpacity>*/}
       <View style={styles.tabs}>
-        <TouchableOpacity style={styles.tab} onPress={() => setTab("events")}>
+        <TouchableOpacity
+          style={styles.tab}
+          onPress={() => {
+            setPickingPic(false); // We finished uploading a new pic
+            setTab("events");
+          }}
+        >
           <Text
             style={[styles.tabText, tab === "events" && styles.tabTextActive]}
           >
@@ -191,10 +322,17 @@ const Profile: React.FC = () => {
                 ]}
                 key={item.id}
               >
-                <Image source={{ uri: item.image }} style={styles.eventImage} />
+                <Image
+                  source={{
+                    uri: item.main_pic
+                      ? `${server}/storage/${item.main_pic}`
+                      : `${server}/img/random_location.jpg`,
+                  }}
+                  style={styles.eventImage}
+                />
                 <View style={styles.eventInfo}>
-                  <Text style={styles.eventTitle}>{item.title}</Text>
-                  <Text style={styles.eventDesc}>{item.description}</Text>
+                  <Text style={styles.eventTitle}>{item.event_type?.name}</Text>
+                  <Text style={styles.eventDesc}>{item.content}</Text>
                   {item.address ? (
                     <View style={styles.eventRow}>
                       <Ionicons
@@ -203,7 +341,9 @@ const Profile: React.FC = () => {
                         color={Colors.purple}
                         style={{ marginRight: 4 }}
                       />
-                      <Text style={styles.eventAddress}>{item.address}</Text>
+                      <Text style={styles.eventAddress} numberOfLines={1}>
+                        {item.address}
+                      </Text>
                     </View>
                   ) : null}
                   <View style={styles.eventRow}>
@@ -213,7 +353,9 @@ const Profile: React.FC = () => {
                       color={Colors.purple}
                       style={{ marginRight: 4 }}
                     />
-                    <Text style={styles.eventUsername}>{item.username}</Text>
+                    <Text style={styles.eventUsername}>
+                      {item.user?.user?.person?.username}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -225,10 +367,17 @@ const Profile: React.FC = () => {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <View style={styles.eventCardFull}>
-                <Image source={{ uri: item.image }} style={styles.eventImage} />
+                <Image
+                  source={{
+                    uri: item.main_pic
+                      ? `${server}/storage/${item.main_pic}`
+                      : `${server}/img/random_location.jpg`,
+                  }}
+                  style={styles.eventImage}
+                />
                 <View style={styles.eventInfo}>
-                  <Text style={styles.eventTitle}>{item.title}</Text>
-                  <Text style={styles.eventDesc}>{item.description}</Text>
+                  <Text style={styles.eventTitle}>{item.event_type?.name}</Text>
+                  <Text style={styles.eventDesc}>{item.content}</Text>
                   {item.address ? (
                     <View style={styles.eventRow}>
                       <Ionicons
@@ -247,7 +396,9 @@ const Profile: React.FC = () => {
                       color={Colors.purple}
                       style={{ marginRight: 4 }}
                     />
-                    <Text style={styles.eventUsername}>{item.username}</Text>
+                    <Text style={styles.eventUsername}>
+                      {item.user?.user?.person?.username}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -261,26 +412,59 @@ const Profile: React.FC = () => {
           {tab === "settings" && (
             <View style={styles.settingsContainer}>
               <SettingsItem
-                label="Name"
-                value={user.name}
+                label="Email"
+                value={user?.user?.email}
                 onPress={() =>
-                  setSelectedField({ label: "Name", value: user.name })
+                  setSelectedField({
+                    label: "email",
+                    value: user?.user?.email,
+                  })
+                }
+              />
+              <SettingsItem
+                label="Name"
+                value={user?.user?.person?.name}
+                onPress={() =>
+                  setSelectedField({
+                    label: "name",
+                    value: user?.user?.person?.name,
+                  })
                 }
               />
               <SettingsItem
                 label="Lastname"
-                value={user.lastname}
+                value={user?.user?.person?.lastname}
                 onPress={() =>
-                  setSelectedField({ label: "Lastname", value: user.lastname })
+                  setSelectedField({
+                    label: "lastname",
+                    value: user?.user?.person?.lastname,
+                  })
                 }
               />
               <SettingsItem
                 label="Phone"
-                value={user.phone}
+                value={user?.user?.person?.phone}
                 onPress={() =>
-                  setSelectedField({ label: "Phone", value: user.phone })
+                  setSelectedField({
+                    label: "phone",
+                    value: user?.user?.person?.phone,
+                  })
                 }
               />
+              {pickingPic && (
+                <TouchableOpacity
+                  style={[
+                    styles.saveBtn,
+                    {
+                      bottom: -160,
+                    },
+                  ]}
+                  activeOpacity={0.8}
+                  onPress={handleProfileSave}
+                >
+                  <Text style={styles.saveBtnText}>Save</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </>
@@ -311,8 +495,41 @@ const SettingsItem = ({
     <Ionicons name="chevron-forward" size={20} color={Colors.purple} />
   </TouchableOpacity>
 );
-
+const PIC_SIZE = 160;
 const styles = StyleSheet.create({
+  picContainer: {
+    width: PIC_SIZE,
+    height: PIC_SIZE,
+    borderRadius: PIC_SIZE / 2,
+    backgroundColor: Colors.blue_dark,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderWidth: 4,
+    borderColor: Colors.purple,
+    marginBottom: 16,
+    alignSelf: "center",
+    position: "relative",
+  },
+  pic: {
+    width: PIC_SIZE,
+    height: PIC_SIZE,
+    borderRadius: PIC_SIZE / 2,
+    resizeMode: "cover",
+  },
+  cameraIconContainer: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 4,
+    elevation: 2,
+  },
+  cameraIcon: {
+    fontSize: 20,
+    color: Colors.purple,
+  },
   saveBtn: {
     position: "absolute",
     bottom: 40,
