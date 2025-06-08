@@ -22,53 +22,6 @@ import * as ImagePicker from "expo-image-picker";
 const PROFILE_PIC_SIZE = 80;
 const { width, height } = Dimensions.get("window");
 
-const events = [
-  {
-    id: "1",
-    title: "Yoga Class",
-    description: "Join our morning yoga session!",
-    image:
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
-    address: "123 Main St, Springfield",
-    username: "yogamaster",
-  },
-  {
-    id: "2",
-    title: "Cooking Night",
-    description: "Let's cook together!",
-    image:
-      "https://images.unsplash.com/photo-1514512364185-4c2b67857b39?auto=format&fit=crop&w=400&q=80",
-    address: "123 Main St, Springfield",
-    username: "chefjane",
-  },
-  {
-    id: "3",
-    title: "Cooking Night",
-    description: "Let's cook together!",
-    image:
-      "https://images.unsplash.com/photo-1514512364185-4c2b67857b39?auto=format&fit=crop&w=400&q=80",
-    address: "123 Main St, Springfield",
-    username: "chefjane",
-  },
-  {
-    id: "4",
-    title: "Cooking Night",
-    description: "Let's cook together!",
-    image:
-      "https://images.unsplash.com/photo-1514512364185-4c2b67857b39?auto=format&fit=crop&w=400&q=80",
-    address: "123 Main St, Springfield",
-    username: "chefjane",
-  },
-  {
-    id: "5",
-    title: "Cooking Night",
-    description: "Let's cook together!",
-    image:
-      "https://images.unsplash.com/photo-1514512364185-4c2b67857b39?auto=format&fit=crop&w=400&q=80",
-    address: "123 Main St, Springfield",
-    username: "chefjane",
-  },
-];
 let DEFAULT_PIC: string;
 const Profile: React.FC = () => {
   const DEFAULT_TIMEOUT = 3000;

@@ -387,45 +387,48 @@ const Map: React.FC = () => {
           </View>
         </View>
       )}
-      <View style={styles.bottomNav}>
+      <View style={styles.fabNavContainer}>
         <TouchableOpacity
-          style={styles.navItem}
+          style={styles.fabNavItem}
           onPress={() => router.push("/home")}
         >
-          <Ionicons name="star-outline" size={28} color={Colors.purple} />
-          <Text style={styles.navLabel}>Fav</Text>
+          <Ionicons name="people-outline" size={28} color={Colors.purple} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={placesNearby}>
+        <TouchableOpacity style={styles.fabNavItem} onPress={placesNearby}>
           <Ionicons name="location-outline" size={28} color={Colors.purple} />
-          <Text style={styles.navLabel}>One</Text>
         </TouchableOpacity>
-        {currentEvent ? (
-          <TouchableOpacity style={styles.navItem} onPress={placesNearby}>
-            <Ionicons name="add-outline" size={28} color={Colors.purple} />
-            <Text style={styles.navLabel}>New</Text>
+        {!currentEvent && user ? ( // -> Add new event, show button where you arent in a current event, you need to log in first
+          <TouchableOpacity style={styles.fabNavCenter} onPress={() => {}}>
+            <Ionicons name="add-outline" size={32} color="#fff" />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.navItem} onPress={placesNearby}>
-            <Ionicons name="diamond-outline" size={28} color={Colors.purple} />
-            <Text style={styles.navLabel}>Event</Text>
-          </TouchableOpacity>
+          <>
+            {currentEvent && ( // -> Current event joined
+              <TouchableOpacity style={styles.fabNavItem} onPress={() => {}}>
+                <Ionicons
+                  name="diamond-outline"
+                  size={28}
+                  color={Colors.purple}
+                />
+              </TouchableOpacity>
+            )}
+          </>
         )}
-        {!user && (
+        {!user ? (
           <TouchableOpacity
-            style={styles.navItem}
+            style={styles.fabNavItem}
             onPress={() => router.push("/src/login/login")}
           >
             <Ionicons name="log-out-outline" size={28} color={Colors.purple} />
-            <Text style={styles.navLabel}>Log in</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.fabNavItem}
+            onPress={() => router.push("/src/profile/profile")}
+          >
+            <Ionicons name="person-outline" size={28} color={Colors.purple} />
           </TouchableOpacity>
         )}
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/src/profile/profile")}
-        >
-          <Ionicons name="person-outline" size={28} color={Colors.purple} />
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -444,6 +447,44 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     ...StyleSheet.absoluteFillObject,
+  },
+  fabNavContainer: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 24,
+    flexDirection: "row",
+    backgroundColor: Colors.blue_dark,
+    borderRadius: 40,
+    height: 70,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    zIndex: 20,
+  },
+  fabNavItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fabNavCenter: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Colors.purple,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: -28,
+    elevation: 10,
+    shadowColor: Colors.purple,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
   bottomNav: {
     position: "absolute",
