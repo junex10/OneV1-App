@@ -129,6 +129,11 @@ const Map: React.FC = () => {
     setCurrentRide(true);
   };
 
+  const logout = () => {
+    Storage.remove("user");
+    router.replace("/");
+  };
+
   useEffect(() => {
     let subscription: Location.LocationSubscription;
     (async () => {
@@ -419,15 +424,24 @@ const Map: React.FC = () => {
             style={styles.fabNavItem}
             onPress={() => router.push("/src/login/login")}
           >
-            <Ionicons name="log-out-outline" size={28} color={Colors.purple} />
+            <Ionicons name="log-in-outline" size={28} color={Colors.purple} />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
-            style={styles.fabNavItem}
-            onPress={() => router.push("/src/profile/profile")}
-          >
-            <Ionicons name="person-outline" size={28} color={Colors.purple} />
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={styles.fabNavItem}
+              onPress={() => router.push("/src/profile/profile")}
+            >
+              <Ionicons name="person-outline" size={28} color={Colors.purple} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.fabNavItem} onPress={logout}>
+              <Ionicons
+                name="log-out-outline"
+                size={28}
+                color={Colors.purple}
+              />
+            </TouchableOpacity>
+          </>
         )}
       </View>
     </View>

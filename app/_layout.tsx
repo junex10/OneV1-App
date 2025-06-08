@@ -34,7 +34,17 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name={`${LOGIN}create-account/forgot-password`}
-          options={{ title: "Verify code", headerShown: false }}
+          options={{ title: "Forgot password", headerShown: false }}
+        />
+
+        <Stack.Screen
+          name={`${LOGIN}create-account/forgot-password-code`}
+          options={{ title: "Forgot password code", headerShown: false }}
+        />
+
+        <Stack.Screen
+          name={`${LOGIN}create-account/new-password`}
+          options={{ title: "New password", headerShown: false }}
         />
 
         {/** MAP */}
