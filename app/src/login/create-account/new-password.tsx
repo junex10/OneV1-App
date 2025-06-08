@@ -10,11 +10,11 @@ import {
   Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "./../../../resources/global";
+import { Colors } from "./../../../../resources/utils/global";
 import { useRouter } from "expo-router";
 import { useLocalSearchParams } from "expo-router";
-import { CustomModal } from "../../../resources";
-import { Auth } from "../../../services";
+import { CustomModal } from "../../../../resources/utils";
+import { Auth } from "../../../../resources/services";
 
 const NewPassword: React.FC = () => {
   const router = useRouter();

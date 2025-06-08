@@ -9,10 +9,10 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useState, useRef } from "react";
-import { Colors } from "./../../resources/global";
+import { Colors } from "./../../../resources/utils/global";
 import { Ionicons } from "@expo/vector-icons";
-import { Auth } from "../../services";
-import { Storage } from "../../resources";
+import { Auth } from "../../../resources/services";
+import { Storage } from "../../../resources/utils";
 
 const Login: React.FC = () => {
   const router = useRouter();

@@ -10,13 +10,13 @@ import {
   TextInput,
   Alert,
 } from "react-native";
-import { Colors } from "./../../resources/global";
+import { Colors } from "./../../../resources/utils/global";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { CustomModal, Storage } from "../../resources";
-import { Events } from "../../services";
+import { CustomModal, Storage } from "../../../resources/utils";
+import { Events } from "../../../resources/services";
 import Constants from "expo-constants";
-import { ProfileService } from "./../../services";
+import { ProfileService } from "./../../../resources/services";
 import * as ImagePicker from "expo-image-picker";
 
 const PROFILE_PIC_SIZE = 80;

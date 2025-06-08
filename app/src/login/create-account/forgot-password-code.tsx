@@ -8,12 +8,12 @@ import {
   Keyboard,
   Animated,
 } from "react-native";
-import { Colors } from "./../../../resources/global";
+import { Colors } from "./../../../../resources/utils/global";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Auth } from "../../../services";
+import { Auth } from "../../../../resources/services";
 import { useLocalSearchParams } from "expo-router";
-import { CustomModal } from "../../../resources";
+import { CustomModal } from "../../../../resources/utils";
 
 const ForgotPasswordCode: React.FC = () => {
   const CODE_LENGTH = 6;

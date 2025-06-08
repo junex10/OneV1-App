@@ -1,6 +1,6 @@
-import { Coordinates } from "./../interfaces";
+import { Coordinates } from "./../../resources/interfaces";
 import Constants from "expo-constants";
-import { api } from "./../providers/api";
+import { api } from "./../../resources/providers/api";
 
 const API = Constants.expoConfig?.extra?.API;
 

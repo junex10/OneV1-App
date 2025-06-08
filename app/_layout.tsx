@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import Providers from "./providers";
+import Providers from "./../resources/providers";
 
 const LOGIN = "src/login/";
 const MAP = "src/map/";

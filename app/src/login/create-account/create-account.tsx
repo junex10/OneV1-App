@@ -12,9 +12,9 @@ import {
 import { Ionicons } from "@expo/vector-icons"; // Add this import
 import { useState, useRef } from "react";
 import { useRouter } from "expo-router";
-import { Colors } from "./../../../resources/global";
-import { Auth } from "../../../services";
-import { CustomModal } from "../../../resources";
+import { Colors } from "./../../../../resources/utils/global";
+import { Auth } from "../../../../resources/services";
+import { CustomModal } from "../../../../resources/utils";
 
 const CreateAccount: React.FC = () => {
   const router = useRouter();

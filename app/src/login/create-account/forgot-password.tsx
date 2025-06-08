@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "./../../../resources/global";
+import { Colors } from "./../../../../resources/utils/global";
 import { useRouter } from "expo-router";
-import { Auth } from "../../../services";
-import { CustomModal } from "../../../resources";
+import { Auth } from "../../../../resources/services";
+import { CustomModal } from "../../../../resources/utils";
 
 const ForgotPassword: React.FC = () => {
   const router = useRouter();

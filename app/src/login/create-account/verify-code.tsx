@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   Keyboard,
 } from "react-native";
-import { Colors } from "./../../../resources/global";
+import { Colors } from "./../../../../resources/utils/global";
 import { useRouter } from "expo-router";
 import { useLocalSearchParams } from "expo-router";
-import { Auth } from "../../../services";
-import { Storage } from "../../../resources";
+import { Auth } from "../../../../resources/services";
+import { Storage } from "../../../../resources/utils";
 
 const CODE_LENGTH = 6;
 

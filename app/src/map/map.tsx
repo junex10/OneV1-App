@@ -14,10 +14,10 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
-import { GoogleMaps, Events } from "./../../services";
-import { CustomModal, Storage } from "../../resources";
-import { useLocation } from "../../providers/location";
-import { mapCustomStyle, Colors } from "./../../resources/global";
+import { GoogleMaps, Events } from "./../../../resources/services";
+import { CustomModal, Storage } from "../../../resources/utils";
+import { useLocation } from "../../../resources/providers/location";
+import { mapCustomStyle, Colors } from "./../../../resources/utils/global";
 import Constants from "expo-constants";
 
 const Map: React.FC = () => {
