@@ -40,6 +40,12 @@ const ChatListScreen: React.FC = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.blue_dark_2 }}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={26} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
       <FlatList
         data={chats}
         keyExtractor={(item) => item.id}
@@ -80,6 +86,23 @@ const ChatListScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: 48,
+    paddingBottom: 18,
+    paddingHorizontal: 18,
+    backgroundColor: Colors.blue_dark_2,
+  },
+  backBtn: {
+    backgroundColor: Colors.purple,
+    borderRadius: 24,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
   listContainer: {
     paddingVertical: 12,
   },

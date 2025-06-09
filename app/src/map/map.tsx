@@ -393,12 +393,14 @@ const Map: React.FC = () => {
         </View>
       )}
       <View style={styles.fabNavContainer}>
-        <TouchableOpacity
-          style={styles.fabNavItem}
-          onPress={() => router.push("/src/chat/chat-list")} // -> We redirect to our friends list
-        >
-          <Ionicons name="people-outline" size={28} color={Colors.purple} />
-        </TouchableOpacity>
+        {user && (
+          <TouchableOpacity
+            style={styles.fabNavItem}
+            onPress={() => router.push("/src/chat/friends-list")} // -> We redirect to our friends list
+          >
+            <Ionicons name="people-outline" size={28} color={Colors.purple} />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.fabNavItem} onPress={placesNearby}>
           <Ionicons name="location-outline" size={28} color={Colors.purple} />
         </TouchableOpacity>
