@@ -12,16 +12,17 @@ const SocketContext = createContext<SocketContextType>({ socket: null });
 
 export const useSocket = () => useContext(SocketContext);
 
+export const socket = io(SOCKET_URL, {
+  transports: ["websocket"],
+  autoConnect: true,
+});
+
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const socket = io(SOCKET_URL, {
-      transports: ["websocket"],
-      autoConnect: true,
-    });
     socketRef.current = socket;
 
     return () => {

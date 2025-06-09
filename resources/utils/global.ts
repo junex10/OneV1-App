@@ -1,6 +1,6 @@
 // Global functions/variables
 
-const Colors = {
+export const Colors = {
   purple: "#FD3A73",
   skin: "#d59563",
   blue_dark: "#263c3f",
@@ -10,7 +10,7 @@ const Colors = {
   gray: "#9ca5b3",
 };
 
-const mapCustomStyle = [
+export const mapCustomStyle = [
   { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
   { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
@@ -91,4 +91,6 @@ const mapCustomStyle = [
   },
 ];
 
-export { mapCustomStyle, Colors };
+export const SocketEvents = {
+  USER_LOCATION: "user/location",
+};
