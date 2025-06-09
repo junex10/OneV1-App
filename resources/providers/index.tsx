@@ -1,9 +1,12 @@
 import { LocationProvider } from "./location";
 import { ApiProvider } from "./api";
+import { SocketProvider } from "./socket";
 
 const Providers = ({ children }: { children: React.ReactNode }) => (
   <ApiProvider>
-    <LocationProvider>{children}</LocationProvider>
+    <SocketProvider>
+      <LocationProvider>{children}</LocationProvider>
+    </SocketProvider>
   </ApiProvider>
 );
 
