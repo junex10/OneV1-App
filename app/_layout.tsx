@@ -4,6 +4,7 @@ import Providers from "./../resources/providers";
 const LOGIN = "src/login/";
 const MAP = "src/map/";
 const PROFILE = "src/profile/";
+const CHAT = "src/chat/";
 
 export default function RootLayout() {
   return (
@@ -59,6 +60,17 @@ export default function RootLayout() {
         <Stack.Screen
           name={`${PROFILE}profile`}
           options={{ title: "Profile", headerShown: false }}
+        />
+
+        {/** CHAT */}
+
+        <Stack.Screen
+          name={`${CHAT}chat-list`}
+          options={{ title: "Chat list", headerShown: false }}
+        />
+        <Stack.Screen
+          name={`${CHAT}chat`}
+          options={{ title: "Chat", headerShown: false }}
         />
       </Stack>
     </Providers>

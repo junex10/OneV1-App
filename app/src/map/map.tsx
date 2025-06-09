@@ -395,7 +395,7 @@ const Map: React.FC = () => {
       <View style={styles.fabNavContainer}>
         <TouchableOpacity
           style={styles.fabNavItem}
-          onPress={() => router.push("/home")}
+          onPress={() => router.push("/src/chat/chat-list")} // -> We redirect to our friends list
         >
           <Ionicons name="people-outline" size={28} color={Colors.purple} />
         </TouchableOpacity>
