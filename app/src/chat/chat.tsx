@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "./../../../resources/utils";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import { Storage } from "./../../../resources/utils";
+import { ChatService } from "../../../resources/services";
+import { useLocalSearchParams } from "expo-router";
+import Constants from "expo-constants";
+import { useSocket } from "../../../resources/providers/socket";
+import { SocketEvents } from "../../../resources/utils/global";
 
 const messagesMock = [
   {
@@ -59,28 +65,46 @@ const messagesMock = [
   },
 ];
 
+const server = Constants.expoConfig?.extra?.SERVER;
+
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState(messagesMock);
   const [sendingImage, setSendingImage] = useState(false);
   const [input, setInput] = useState("");
+  const [user, setUser] = useState<any>(null);
+  const [chatWith, setChatWith] = useState<any | null>(null);
+  const [chatSession, setChatSession] = useState<any>(null);
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
+  const { friend } = useLocalSearchParams<any>();
+  const friendData = friend ? JSON.parse(friend as string) : null;
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    (async () => {
+      const getUser = await Storage.get("user");
+      setUser(getUser);
+
+      setChatWith(friendData);
+
+      // We verify if we have a chat
+      const logs = await ChatService.getLogs({
+        user_id: getUser?.user?.id,
+        other_user_id: friendData?.id,
+      });
+      setChatSession(logs?.chats?.chat_session);
+      setMessages(logs?.chats?.logs);
+    })();
+  }, []);
 
   const handleSend = () => {
-    if (!input.trim()) return;
-    setMessages([
-      ...messages,
-      {
-        id: (messages.length + 1).toString(),
-        user: "me",
-        text: input,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        type: "text",
-      },
-    ]);
+    if (!input.trim()) return; // <-- Wait for socket
+    socket?.emit(SocketEvents.USER_LOCATION, {
+      chat_session_id: chatSession?.id,
+      sender_id: user?.user?.id,
+      message: input,
+    });
+    console.log(socket, "here "); // It isnt working check this out later
     setInput("");
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -134,9 +158,6 @@ const Chat: React.FC = () => {
             item.type === "task" && styles.bubbleTask,
           ]}
         >
-          {item.username && !isMe && (
-            <Text style={styles.senderName}>{item.username}</Text>
-          )}
           <Text
             style={[
               styles.messageText,
@@ -144,7 +165,7 @@ const Chat: React.FC = () => {
               item.type === "task" && styles.taskText,
             ]}
           >
-            {item.text}
+            {item.message}
           </Text>
           {item.image && (
             <Image
@@ -172,13 +193,15 @@ const Chat: React.FC = () => {
         <View style={styles.headerPicWrapper}>
           <Image
             source={{
-              uri: "https://randomuser.me/api/portraits/men/32.jpg",
+              uri: chatWith?.photo
+                ? `${server}storage/${chatWith?.photo}`
+                : `${server}img/random_location.jpg`,
             }}
             style={styles.headerPic}
           />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>UpLvL Official Circle</Text>
+          <Text style={styles.headerTitle}>{chatWith?.person?.username}</Text>
           <Text style={styles.headerSubtitle}>Tap to view details</Text>
         </View>
       </View>

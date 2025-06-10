@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,70 +11,46 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../resources/utils";
 import { useRouter } from "expo-router";
+import { FriendService } from "../../../resources/services";
+import { Storage } from "./../../../resources/utils";
+import Constants from "expo-constants";
 
 const FRIEND_PIC_SIZE = 54;
-
-// Dummy data for friends
-const mockFriends = [
-  {
-    id: "1",
-    username: "Heaven",
-    handle: "cupcake_77706",
-    photo: "https://randomuser.me/api/portraits/women/10.jpg",
-  },
-  {
-    id: "2",
-    username: "nev",
-    handle: "nevaehmcneely",
-    photo: "https://randomuser.me/api/portraits/men/11.jpg",
-  },
-  {
-    id: "3",
-    username: "Sindy G👑💅",
-    handle: "sindyg1216",
-    photo: "https://randomuser.me/api/portraits/women/12.jpg",
-  },
-  {
-    id: "4",
-    username: "Missy",
-    handle: "missebaby123",
-    photo: "https://randomuser.me/api/portraits/women/13.jpg",
-  },
-  {
-    id: "5",
-    username: "Belle😊",
-    handle: "belle_calliee24",
-    photo: "https://randomuser.me/api/portraits/women/14.jpg",
-  },
-  {
-    id: "6",
-    username: "Jenny Jen Jen",
-    handle: "texasangel54",
-    photo: "https://randomuser.me/api/portraits/women/15.jpg",
-  },
-  {
-    id: "7",
-    username: "Ký",
-    handle: "texasboo_96",
-    photo: "https://randomuser.me/api/portraits/men/16.jpg",
-  },
-  {
-    id: "8",
-    username: "Angel 💋",
-    handle: "vulcan.liu",
-    photo: "https://randomuser.me/api/portraits/men/17.jpg",
-  },
-];
+const server = Constants.expoConfig?.extra?.SERVER;
 
 const FriendsList: React.FC = () => {
   const [search, setSearch] = useState("");
+  const [user, setUser] = useState(null);
+  const [friends, setFriends] = useState<any[] | null>(null);
+  const [filteredFriends, setFilteredFriends] = useState<any[] | null>(null);
   const router = useRouter();
 
-  const filteredFriends = mockFriends.filter(
-    (f) =>
-      f.username.toLowerCase().includes(search.toLowerCase()) ||
-      f.handle.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    (async () => {
+      const getUser = await Storage.get("user");
+      setUser(getUser);
+
+      const data = await FriendService.getFriends({
+        user_id: getUser?.user?.id,
+      });
+      setFriends(data?.friends?.friends);
+      setFilteredFriends(data?.friends?.friends);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!friends) return;
+    const q = search.trim().toLowerCase();
+    if (!q) {
+      setFilteredFriends(friends);
+    } else {
+      setFilteredFriends(
+        friends.filter((item) =>
+          item?.person?.username?.toLowerCase().includes(q)
+        )
+      );
+    }
+  }, [search, friends]);
 
   return (
     <View style={styles.container}>
@@ -112,22 +88,40 @@ const FriendsList: React.FC = () => {
       {/* Friends List */}
       <Text style={styles.sectionTitle}>Find Friends</Text>
       <FlatList
-        data={filteredFriends}
+        data={filteredFriends || []}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.friendItem}>
-            <Image source={{ uri: item.photo }} style={styles.pic} />
-            <View style={styles.info}>
-              <Text style={styles.username}>{item.username}</Text>
-              <Text style={styles.handle}>{item.handle}</Text>
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "src/chat/chat",
+                params: {
+                  friend: JSON.stringify(item),
+                },
+              })
+            }
+          >
+            <View style={styles.friendItem}>
+              <Image
+                source={{
+                  uri: item?.photo
+                    ? `${server}storage/${item?.photo}`
+                    : `${server}img/random_location.jpg`,
+                }}
+                style={styles.pic}
+              />
+              <View style={styles.info}>
+                <Text style={styles.username}>{item?.person?.username}</Text>
+              </View>
+
+              <Ionicons // -> This will open the current chat/create a new chat
+                name="arrow-forward-outline"
+                size={28}
+                color={Colors.purple}
+                style={styles.addedIcon}
+              />
             </View>
-            <Ionicons // -> This will open the current chat/create a new chat
-              name="arrow-forward-outline"
-              size={28}
-              color={Colors.purple}
-              style={styles.addedIcon}
-            />
-          </View>
+          </TouchableOpacity>
         )}
         contentContainerStyle={styles.listContainer}
       />

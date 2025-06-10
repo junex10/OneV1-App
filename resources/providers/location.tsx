@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { Linking, Platform } from "react-native";
 import * as Location from "expo-location";
-import { socket } from "./socket";
+import { useSocket } from "./socket";
 import { SocketEvents } from "../utils/global";
 import { Storage } from "../utils";
 
@@ -15,6 +15,7 @@ const LocationContext = createContext(null);
 
 export const LocationProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [location, setLocation] = useState(null);
+  const { socket } = useSocket();
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -46,7 +47,7 @@ export const LocationProvider: React.FC<PropsWithChildren> = ({ children }) => {
               user_id: user?.user?.id,
             };
             timeout = setTimeout(() => {
-              socket.emit(SocketEvents.USER_LOCATION, coordinates);
+              socket?.emit(SocketEvents.USER_LOCATION, coordinates);
             }, 5000);
           }
           setLocation(loc);
