@@ -18,9 +18,10 @@ import { Storage } from "./../../../resources/utils";
 import { ChatService } from "../../../resources/services";
 import { useLocalSearchParams } from "expo-router";
 import Constants from "expo-constants";
-import { useSocket } from "../../../resources/providers/socket";
+import { socket } from "../../../resources/providers/socket";
 import { SocketEvents } from "../../../resources/utils/global";
-
+import { eventBus } from "../../../resources/utils/global";
+import moment from "moment";
 const messagesMock = [
   {
     id: "1",
@@ -78,7 +79,6 @@ const Chat: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
   const { friend } = useLocalSearchParams<any>();
   const friendData = friend ? JSON.parse(friend as string) : null;
-  const { socket } = useSocket();
 
   useEffect(() => {
     (async () => {
@@ -95,16 +95,21 @@ const Chat: React.FC = () => {
       setChatSession(logs?.chats?.chat_session);
       setMessages(logs?.chats?.logs);
     })();
+
+    eventBus.on(SocketEvents.NEW_MESSAGE, async (data) => {
+      setMessages(data?.logs);
+    });
   }, []);
 
   const handleSend = () => {
-    if (!input.trim()) return; // <-- Wait for socket
-    socket?.emit(SocketEvents.USER_LOCATION, {
+    if (!input.trim()) return;
+    socket?.emit(SocketEvents.NEW_MESSAGE, {
       chat_session_id: chatSession?.id,
       sender_id: user?.user?.id,
       message: input,
+      other_user_id: friendData?.id,
     });
-    console.log(socket, "here "); // It isnt working check this out later
+
     setInput("");
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -143,7 +148,11 @@ const Chat: React.FC = () => {
   };
 
   const renderMessage = ({ item }: { item: any }) => {
-    const isMe = item.user === "me";
+    const isMe = item.sender_id === user?.user?.id;
+    const formattedTime = moment(item?.created_at, [
+      "HH:mm",
+      moment.ISO_8601,
+    ]).format("HH:mm a");
     return (
       <View
         style={[
@@ -174,7 +183,7 @@ const Chat: React.FC = () => {
               resizeMode="cover"
             />
           )}
-          <Text style={styles.timeText}>{item.time}</Text>
+          <Text style={styles.timeText}>{formattedTime}</Text>
         </View>
       </View>
     );

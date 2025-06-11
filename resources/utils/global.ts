@@ -1,3 +1,4 @@
+import EventEmitter from "eventemitter3";
 // Global functions/variables
 
 export const Colors = {
@@ -95,3 +96,5 @@ export const SocketEvents = {
   USER_LOCATION: "user/location",
   NEW_MESSAGE: "chat/new-message",
 };
+
+export const eventBus = new EventEmitter();
