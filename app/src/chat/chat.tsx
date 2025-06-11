@@ -22,54 +22,12 @@ import { socket } from "../../../resources/providers/socket";
 import { SocketEvents } from "../../../resources/utils/global";
 import { eventBus } from "../../../resources/utils/global";
 import moment from "moment";
-const messagesMock = [
-  {
-    id: "1",
-    user: "other",
-    username: "UpLvL Official Circle",
-    text: "Today is gym day for me guys, the 4th day in a row this week",
-    time: "15:27",
-    type: "text",
-  },
-  {
-    id: "2",
-    user: "other",
-    username: "AlbertoBD",
-    text: "AlbertoBD has sent a task for validation: Arm Workout",
-    image:
-      "https://images.unsplash.com/photo-1517960413843-0aee8e2d471c?auto=format&fit=crop&w=400&q=80",
-    time: "15:30",
-    type: "task",
-  },
-  {
-    id: "3",
-    user: "other",
-    username: "Boris",
-    text: "Nice brooo keep it up 💪💪",
-    time: "15:32",
-    type: "text",
-    bold: true,
-  },
-  {
-    id: "4",
-    user: "me",
-    text: "Thank you!!",
-    time: "15:34",
-    type: "text",
-  },
-  {
-    id: "5",
-    user: "me",
-    text: "You too broo",
-    time: "15:34",
-    type: "text",
-  },
-];
+import * as FileSystem from "expo-file-system";
 
 const server = Constants.expoConfig?.extra?.SERVER;
 
 const Chat: React.FC = () => {
-  const [messages, setMessages] = useState(messagesMock);
+  const [messages, setMessages] = useState<any>([]);
   const [sendingImage, setSendingImage] = useState(false);
   const [input, setInput] = useState("");
   const [user, setUser] = useState<any>(null);
@@ -96,7 +54,10 @@ const Chat: React.FC = () => {
       setMessages(logs?.chats?.logs);
     })();
 
-    eventBus.on(SocketEvents.NEW_MESSAGE, async (data) => {
+    eventBus.on(SocketEvents.NEW_MESSAGE, (data) => {
+      setMessages(data?.logs);
+    });
+    eventBus.on(SocketEvents.NEW_PIC_MESSAGE, (data) => {
       setMessages(data?.logs);
     });
   }, []);
@@ -109,6 +70,16 @@ const Chat: React.FC = () => {
       message: input,
       other_user_id: friendData?.id,
     });
+
+    console.log(
+      {
+        chat_session_id: chatSession?.id,
+        sender_id: user?.user?.id,
+        message: input,
+        other_user_id: friendData?.id,
+      },
+      " TEST"
+    );
 
     setInput("");
     setTimeout(() => {
@@ -126,21 +97,21 @@ const Chat: React.FC = () => {
     setSendingImage(false);
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selected = result.assets[0];
-      setMessages([
-        ...messages,
-        {
-          id: (messages.length + 1).toString(),
-          user: "me",
-          username: "test",
-          text: "",
-          image: selected.uri,
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          type: "image",
+      const base64 = await FileSystem.readAsStringAsync(selected.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      socket?.emit(SocketEvents.NEW_PIC_MESSAGE, {
+        chat_session_id: chatSession?.id,
+        sender_id: user?.user?.id,
+        other_user_id: friendData?.id,
+        attachment: {
+          fileName: selected.fileName,
+          mimeType: selected.mimeType,
+          base64, // send base64 string
         },
-      ]);
+      });
+
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -176,9 +147,11 @@ const Chat: React.FC = () => {
           >
             {item.message}
           </Text>
-          {item.image && (
+          {item.attachment && (
             <Image
-              source={{ uri: item.image }}
+              source={{
+                uri: `${server}/storage/${item.attachment}`,
+              }}
               style={styles.messageImage}
               resizeMode="cover"
             />

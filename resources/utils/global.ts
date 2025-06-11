@@ -95,6 +95,7 @@ export const mapCustomStyle = [
 export const SocketEvents = {
   USER_LOCATION: "user/location",
   NEW_MESSAGE: "chat/new-message",
+  NEW_PIC_MESSAGE: "chat/new-pic-message",
 };
 
 export const eventBus = new EventEmitter();

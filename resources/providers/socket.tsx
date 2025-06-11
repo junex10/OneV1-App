@@ -30,6 +30,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket?.on(SocketEvents.NEW_MESSAGE, (data: any) =>
       eventBus.emit(SocketEvents.NEW_MESSAGE, data)
     );
+    socket?.on(SocketEvents.NEW_PIC_MESSAGE, (data: any) =>
+      eventBus.emit(SocketEvents.NEW_PIC_MESSAGE, data)
+    );
 
     return () => {
       socket.disconnect();
