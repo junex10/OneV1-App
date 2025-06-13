@@ -71,16 +71,6 @@ const Chat: React.FC = () => {
       other_user_id: friendData?.id,
     });
 
-    console.log(
-      {
-        chat_session_id: chatSession?.id,
-        sender_id: user?.user?.id,
-        message: input,
-        other_user_id: friendData?.id,
-      },
-      " TEST"
-    );
-
     setInput("");
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -172,6 +162,7 @@ const Chat: React.FC = () => {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={26} color="#fff" />
         </TouchableOpacity>
+
         <View style={styles.headerPicWrapper}>
           <Image
             source={{
@@ -182,10 +173,21 @@ const Chat: React.FC = () => {
             style={styles.headerPic}
           />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>{chatWith?.person?.username}</Text>
-          <Text style={styles.headerSubtitle}>Tap to view details</Text>
-        </View>
+        <TouchableOpacity
+          onPress={() => {
+            router.push({
+              pathname: "/src/chat/friend-profile",
+              params: {
+                friend: JSON.stringify(chatWith),
+              },
+            });
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>{chatWith?.person?.username}</Text>
+            <Text style={styles.headerSubtitle}>Tap to view details</Text>
+          </View>
+        </TouchableOpacity>
       </View>
       <FlatList
         ref={flatListRef}

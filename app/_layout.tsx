@@ -76,6 +76,10 @@ export default function RootLayout() {
           name={`${CHAT}friends-list`}
           options={{ title: "Friends", headerShown: false }}
         />
+        <Stack.Screen
+          name={`${CHAT}friend-profile`}
+          options={{ title: "Friend profile", headerShown: false }}
+        />
       </Stack>
     </Providers>
   );
