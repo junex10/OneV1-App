@@ -28,7 +28,8 @@ const FriendProfile: React.FC = () => {
   const router = useRouter();
   const { friend } = useLocalSearchParams<any>(); //
 
-  const [subscribed, setSubscribe] = useState<boolean | null>(null); //True = subscribed, false = it isnt
+  const [subscribed, setSubscribe] = useState<boolean | null>(null);
+  const [blocked, setBlocked] = useState<boolean | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [events, setEvents] = useState<any[]>([]);
 
@@ -56,7 +57,6 @@ const FriendProfile: React.FC = () => {
       });
       DEFAULT_PIC = `${server}storage/${getFriend.photo}`;
       const eventsData = await Events.getEventsByUser({
-        // ahj
         user_id: getFriend.id,
       });
       if (eventsData.places) {
@@ -72,12 +72,7 @@ const FriendProfile: React.FC = () => {
         sender_id: currentUser.user.id,
         receiver_id: user.user?.id,
       });
-      // Option 1: Optimistically toggle
       setSubscribe((prev) => !prev);
-
-      // Option 2: Refetch actual status from backend after update
-      // const status = await FriendService.checkSubscription(...);
-      // setSubscribe(status === "FOLLOWED");
     } catch (e) {
       Alert.prompt("Error has occurred");
     }
@@ -105,10 +100,7 @@ const FriendProfile: React.FC = () => {
             <Text style={styles.email}>{user?.user?.email}</Text>
             <View style={styles.addressRow}></View>
             <Text style={styles.subscribers}>
-              {user?.person?.subscribers
-                ? Number(user?.user?.person?.subscribers)
-                : 0}{" "}
-              subscribers
+              {`${user?.user?.person?.subscribers} `} subscribers
             </Text>
           </View>
         </>

@@ -21,6 +21,7 @@ import * as ImagePicker from "expo-image-picker";
 
 const PROFILE_PIC_SIZE = 80;
 const { width, height } = Dimensions.get("window");
+let formData = new FormData();
 
 let DEFAULT_PIC: string;
 const Profile: React.FC = () => {
@@ -28,7 +29,6 @@ const Profile: React.FC = () => {
 
   const router = useRouter();
   const server = Constants.expoConfig?.extra?.SERVER;
-  const formData = new FormData();
 
   const [tab, setTab] = useState<"events" | "settings">("events");
   const [subscribed, setSubscribe] = useState<boolean>(false); //True = subscribed, false = it isnt
@@ -65,6 +65,7 @@ const Profile: React.FC = () => {
   }, [subscribed, selectedField]);
 
   const pickImage = async () => {
+    formData.delete("photo");
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images, // Only allow images
       allowsEditing: true,
@@ -75,24 +76,6 @@ const Profile: React.FC = () => {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selected = result.assets[0];
       if (selected.type && selected.type.startsWith("image")) {
-        let fileType = "image/jpeg";
-
-        if (pickingPic) {
-          if (selected.uri?.endsWith(".png")) fileType = "image/png";
-          else if (
-            selected.uri?.endsWith(".jpg") ||
-            selected.uri?.endsWith(".jpeg")
-          )
-            fileType = "image/jpeg";
-          else if (selected.uri?.endsWith(".webp")) fileType = "image/webp";
-          else fileType = "image/*";
-
-          formData.append("photo", {
-            uri: selected.uri,
-            name: "photo",
-            type: fileType,
-          } as any);
-        }
         setPhoto(selected.uri);
         setPickingPic(true); // We show the button to update only the picture
       } else {
@@ -103,6 +86,24 @@ const Profile: React.FC = () => {
 
   const handleProfileSave = async () => {
     formData.append("id", user?.user?.id);
+    formData.delete("photo");
+
+    let fileType = "image/jpeg";
+
+    if (photo) {
+      if (photo?.endsWith(".png")) fileType = "image/png";
+      else if (photo?.endsWith(".jpg") || photo?.endsWith(".jpeg"))
+        fileType = "image/jpeg";
+      else if (photo?.endsWith(".webp")) fileType = "image/webp";
+      else fileType = "image/*";
+
+      formData.append("photo", {
+        uri: photo,
+        name: "photo",
+        type: fileType,
+      } as any);
+    }
+    console.log(formData, " ITS SAVING ");
 
     switch (selectedField?.label) {
       case "email":
@@ -118,13 +119,16 @@ const Profile: React.FC = () => {
         formData.append("phone", inputValue);
         break;
     }
-
-    const updated = await ProfileService.update(formData);
-    if (updated?.data) {
-      Storage.set("user", updated?.data);
-      setSuccess(true);
-      setSelectedField(null);
-    }
+    setTimeout(async () => {
+      const updated = await ProfileService.update(formData);
+      if (updated?.data) {
+        Storage.set("user", updated?.data);
+        setSuccess(true);
+        setSelectedField(null);
+        setPickingPic(false);
+      }
+      formData = new FormData();
+    }, 5000);
   };
 
   if (selectedField) {
