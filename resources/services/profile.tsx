@@ -5,11 +5,9 @@ import { api } from "./../../resources/providers/api";
 const API = Constants.expoConfig?.extra?.API;
 
 const ProfileService = {
-  update: async (event: FormData) => {
+  update: async (event: any) => {
     try {
-      const response = await api.post(`${API}app/profile/update`, event, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await api.post(`${API}app/profile/update`, event);
       return response.data;
     } catch (error) {
       console.error("Error fetching places:", error);

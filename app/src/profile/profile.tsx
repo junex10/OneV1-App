@@ -18,10 +18,10 @@ import { Events } from "../../../resources/services";
 import Constants from "expo-constants";
 import { ProfileService } from "./../../../resources/services";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 
 const PROFILE_PIC_SIZE = 80;
 const { width, height } = Dimensions.get("window");
-let formData = new FormData();
 
 let DEFAULT_PIC: string;
 const Profile: React.FC = () => {
@@ -42,6 +42,7 @@ const Profile: React.FC = () => {
   const [success, setSuccess] = useState<boolean>(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [pickingPic, setPickingPic] = useState<boolean>(false);
+  const [photoData, setPhotoData] = useState<{} | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -75,6 +76,14 @@ const Profile: React.FC = () => {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selected = result.assets[0];
       if (selected.type && selected.type.startsWith("image")) {
+        const base64 = await FileSystem.readAsStringAsync(selected.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        setPhotoData({
+          fileName: selected.fileName,
+          mimeType: selected.mimeType,
+          base64, // send base64 string
+        });
         setPhoto(selected.uri);
         setPickingPic(true); // We show the button to update only the picture
       } else {
@@ -84,50 +93,53 @@ const Profile: React.FC = () => {
   };
 
   const handleProfileSave = async () => {
-    formData.append("id", user?.user?.id);
-    formData.delete("photo");
+    let formData: {} = {
+      id: user?.user?.id,
+    };
 
-    let fileType = "image/jpeg";
-
-    if (photo) {
-      if (photo?.endsWith(".png")) fileType = "image/png";
-      else if (photo?.endsWith(".jpg") || photo?.endsWith(".jpeg"))
-        fileType = "image/jpeg";
-      else if (photo?.endsWith(".webp")) fileType = "image/webp";
-      else fileType = "image/*";
-
-      formData.append("photo", {
-        uri: photo,
-        name: "photo",
-        type: fileType,
-      } as any);
+    if (photoData) {
+      formData = {
+        ...formData,
+        photo: photoData,
+      };
     }
-    console.log(formData, " ITS SAVING ");
 
     switch (selectedField?.label) {
       case "email":
-        formData.append("email", inputValue);
+        formData = {
+          ...formData,
+          email: inputValue,
+        };
         break;
       case "name":
-        formData.append("name", inputValue);
+        formData = {
+          ...formData,
+          name: inputValue,
+        };
         break;
       case "lastname":
-        formData.append("lastname", inputValue);
+        formData = {
+          ...formData,
+          lastname: inputValue,
+        };
         break;
       case "phone":
-        formData.append("phone", inputValue);
+        formData = {
+          ...formData,
+          phone: inputValue,
+        };
         break;
     }
-    setTimeout(async () => {
-      const updated = await ProfileService.update(formData);
-      if (updated?.data) {
-        Storage.set("user", updated?.data);
-        setSuccess(true);
-        setSelectedField(null);
-        setPickingPic(false);
-      }
-      formData = new FormData();
-    }, 5000);
+    console.log(formData, " ITS SAVING ");
+
+    const updated = await ProfileService.update(formData);
+    if (updated?.data) {
+      Storage.set("user", updated?.data);
+      setSuccess(true);
+      setSelectedField(null);
+      setPickingPic(false);
+      setPhotoData(null);
+    }
   };
 
   if (selectedField) {
