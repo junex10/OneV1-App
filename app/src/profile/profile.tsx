@@ -65,7 +65,6 @@ const Profile: React.FC = () => {
   }, [subscribed, selectedField]);
 
   const pickImage = async () => {
-    formData.delete("photo");
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images, // Only allow images
       allowsEditing: true,

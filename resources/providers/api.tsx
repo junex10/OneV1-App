@@ -14,7 +14,7 @@ export const useSpinner = () => useContext(SpinnerContext);
 
 export const api = axios.create({
   baseURL: API,
-  timeout: 10000,
+  timeout: 60000,
 });
 
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({

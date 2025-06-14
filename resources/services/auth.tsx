@@ -22,11 +22,9 @@ const Auth = {
       throw error;
     }
   },
-  newUser: async (request: FormData) => {
+  newUser: async (request: any) => {
     try {
-      const response = await api.post(`${API}app/auth/register`, request, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await api.post(`${API}app/auth/register`, request);
       return response.data;
     } catch (error) {
       console.error("Error fetching places:", error);

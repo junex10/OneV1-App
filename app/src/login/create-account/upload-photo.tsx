@@ -12,12 +12,15 @@ import { useRouter } from "expo-router";
 import { Colors } from "./../../../../resources/utils/global";
 import { useLocalSearchParams } from "expo-router";
 import { Auth } from "../../../../resources/services";
+import * as FileSystem from "expo-file-system";
 
 let DEFAULT_PIC: string;
+let formData = new FormData();
 
 const UploadPhoto: React.FC = () => {
   const [photo, setPhoto] = useState<string | null>(null);
   const [getUser, setUser] = useState<any>(null);
+  const [photoData, setPhotoData] = useState<{} | null>(null);
   const router = useRouter();
   const { user } = useLocalSearchParams();
 
@@ -37,7 +40,16 @@ const UploadPhoto: React.FC = () => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selected = result.assets[0];
+
       if (selected.type && selected.type.startsWith("image")) {
+        const base64 = await FileSystem.readAsStringAsync(selected.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        setPhotoData({
+          fileName: selected.fileName,
+          mimeType: selected.mimeType,
+          base64, // send base64 string
+        });
         setPhoto(selected.uri);
       } else {
         Alert.alert("Only images are allowed.");
@@ -46,43 +58,30 @@ const UploadPhoto: React.FC = () => {
   };
 
   const handleNext = async () => {
-    const formData = new FormData();
-
-    let fileType = "image/jpeg";
-
-    if (photo?.endsWith(".png")) fileType = "image/png";
-    else if (photo?.endsWith(".jpg") || photo?.endsWith(".jpeg"))
-      fileType = "image/jpeg";
-    else if (photo?.endsWith(".webp")) fileType = "image/webp";
-    else fileType = "image/*";
-
-    formData.append("email", getUser?.email);
-    formData.append("username", getUser?.username);
-    formData.append("phone", getUser?.phone);
-    formData.append("password", getUser?.password);
-    formData.append("password_confirmation", getUser?.password);
-    formData.append("photo", {
-      uri: photo,
-      name: "photo",
-      type: fileType,
-    } as any);
-
-    // You can pass the photo URI to the next screen here
-
-    const newUser = await Auth.newUser(formData);
-
-    if (newUser) {
-      router.push({
-        pathname: "/src/login/create-account/verify-code",
-        params: {
-          user: JSON.stringify(newUser),
-        },
+    try {
+      const newUser = await Auth.newUser({
+        email: getUser?.email,
+        username: getUser?.username,
+        phone: getUser?.phone,
+        password: getUser?.password,
+        password_confirmation: getUser?.password,
+        photo: photoData,
       });
-    } else {
-      Alert.alert("An unknow error has happened");
-    }
 
-    // Add the request here
+      if (newUser) {
+        router.push({
+          pathname: "/src/login/create-account/verify-code",
+          params: {
+            user: JSON.stringify(newUser),
+          },
+        });
+      } else {
+        Alert.alert("An unknow error has happened");
+      }
+      formData = new FormData();
+    } catch (e) {
+      Alert.alert("An unknow error has happened, try again");
+    }
   };
 
   return (
