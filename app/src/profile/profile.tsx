@@ -130,8 +130,6 @@ const Profile: React.FC = () => {
         };
         break;
     }
-    console.log(formData, " ITS SAVING ");
-
     const updated = await ProfileService.update(formData);
     if (updated?.data) {
       Storage.set("user", updated?.data);
