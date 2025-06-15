@@ -63,7 +63,18 @@ const Chat: React.FC = () => {
     eventBus.on(SocketEvents.NEW_PIC_MESSAGE, (data) => {
       setMessages(data?.logs);
     });
+
+    return () => {
+      eventBus.off(SocketEvents.NEW_MESSAGE);
+      eventBus.off(SocketEvents.NEW_PIC_MESSAGE);
+    };
   }, []);
+
+  useEffect(() => {
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, [messages]);
 
   const handleSend = () => {
     if (!input.trim()) return;
