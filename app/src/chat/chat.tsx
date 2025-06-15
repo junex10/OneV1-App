@@ -9,6 +9,8 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "./../../../resources/utils";
@@ -19,8 +21,7 @@ import { ChatService } from "../../../resources/services";
 import { useLocalSearchParams } from "expo-router";
 import Constants from "expo-constants";
 import { socket } from "../../../resources/providers/socket";
-import { SocketEvents } from "../../../resources/utils/global";
-import { eventBus } from "../../../resources/utils/global";
+import { SocketEvents, eventBus } from "../../../resources/utils/global";
 import moment from "moment";
 import * as FileSystem from "expo-file-system";
 
@@ -33,6 +34,8 @@ const Chat: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [chatWith, setChatWith] = useState<any | null>(null);
   const [chatSession, setChatSession] = useState<any>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
   const { friend } = useLocalSearchParams<any>();
@@ -138,13 +141,21 @@ const Chat: React.FC = () => {
             {item.message}
           </Text>
           {item.attachment && (
-            <Image
-              source={{
-                uri: `${server}/storage/${item.attachment}`,
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedImage(`${server}/storage/${item.attachment}`);
+                setModalVisible(true);
               }}
-              style={styles.messageImage}
-              resizeMode="cover"
-            />
+              activeOpacity={0.8}
+            >
+              <Image
+                source={{
+                  uri: `${server}/storage/${item.attachment}`,
+                }}
+                style={styles.messageImage}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
           )}
           <Text style={styles.timeText}>{formattedTime}</Text>
         </View>
@@ -153,73 +164,99 @@ const Chat: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={90}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#fff" />
-        </TouchableOpacity>
-
-        <View style={styles.headerPicWrapper}>
-          <Image
-            source={{
-              uri: chatWith?.photo
-                ? `${server}storage/${chatWith?.photo}`
-                : `${server}img/random_location.jpg`,
-            }}
-            style={styles.headerPic}
-          />
-        </View>
-        <TouchableOpacity
-          onPress={() => {
-            router.push({
-              pathname: "/src/chat/friend-profile",
-              params: {
-                friend: JSON.stringify(chatWith),
-              },
-            });
+    <>
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.9)",
+            justifyContent: "center",
+            alignItems: "center",
           }}
+          onPress={() => setModalVisible(false)}
         >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>{chatWith?.person?.username}</Text>
-            <Text style={styles.headerSubtitle}>Tap to view details</Text>
+          {selectedImage && (
+            <Image
+              source={{ uri: selectedImage }}
+              style={{ width: "90%", height: "70%", resizeMode: "contain" }}
+            />
+          )}
+        </Pressable>
+      </Modal>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={90}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={26} color="#fff" />
+          </TouchableOpacity>
+
+          <View style={styles.headerPicWrapper}>
+            <Image
+              source={{
+                uri: chatWith?.photo
+                  ? `${server}storage/${chatWith?.photo}`
+                  : `${server}img/random_location.jpg`,
+              }}
+              style={styles.headerPic}
+            />
           </View>
-        </TouchableOpacity>
-      </View>
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() =>
-          flatListRef.current?.scrollToEnd({ animated: true })
-        }
-      />
-      <View style={styles.inputRow}>
-        <TouchableOpacity
-          style={styles.attachBtn}
-          onPress={handlePickImage}
-          disabled={sendingImage}
-        >
-          <Ionicons name="image-outline" size={26} color={Colors.purple} />
-        </TouchableOpacity>
-        <TextInput
-          style={styles.input}
-          placeholder="Type your message..."
-          placeholderTextColor="#bfc3c9"
-          value={input}
-          onChangeText={setInput}
-          onSubmitEditing={handleSend}
+          <TouchableOpacity
+            onPress={() => {
+              router.push({
+                pathname: "/src/chat/friend-profile",
+                params: {
+                  friend: JSON.stringify(chatWith),
+                },
+              });
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.headerTitle}>
+                {chatWith?.person?.username}
+              </Text>
+              <Text style={styles.headerSubtitle}>Tap to view details</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.messagesList}
+          onContentSizeChange={() =>
+            flatListRef.current?.scrollToEnd({ animated: true })
+          }
         />
-        <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
-          <Ionicons name="send" size={26} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+        <View style={styles.inputRow}>
+          <TouchableOpacity
+            style={styles.attachBtn}
+            onPress={handlePickImage}
+            disabled={sendingImage}
+          >
+            <Ionicons name="image-outline" size={26} color={Colors.purple} />
+          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Type your message..."
+            placeholderTextColor="#bfc3c9"
+            value={input}
+            onChangeText={setInput}
+            onSubmitEditing={handleSend}
+          />
+          <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
+            <Ionicons name="send" size={26} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </>
   );
 };
 
