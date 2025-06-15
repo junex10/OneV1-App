@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,9 +9,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Colors } from "./../../../resources/utils";
+import { Colors, Storage } from "./../../../resources/utils";
+import { ChatService } from "../../../resources/services";
+import Constants from "expo-constants";
 
 const PIC_SIZE = 56;
+const server = Constants.expoConfig?.extra?.SERVER;
 
 // Dummy data for testing
 const mockChats = [
@@ -30,12 +33,27 @@ const mockChats = [
 ];
 
 const ChatListScreen: React.FC = () => {
-  const [chats] = useState(mockChats);
+  const [chats, setChats] = useState<any>([]);
+  const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
-  const handlePressChat = (chat: (typeof mockChats)[0]) => {
-    // Navigate to chat screen, pass chat id or data as needed
-    router.push(`/src/chat/chat?id=${chat.id}`);
+  useEffect(() => {
+    (async () => {
+      const getUser = await Storage.get("user");
+      setUser(getUser);
+
+      const data = await ChatService.getChats(getUser?.user?.id);
+      setChats(data?.chats);
+    })();
+  }, []);
+
+  const handlePressChat = (otherUser: any) => {
+    router.push({
+      pathname: "src/chat/chat",
+      params: {
+        friend: JSON.stringify(otherUser),
+      },
+    });
   };
 
   return (
@@ -48,20 +66,27 @@ const ChatListScreen: React.FC = () => {
 
       <FlatList
         data={chats}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.lastLog.id}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.chatItem}
-            onPress={() => handlePressChat(item)}
+            onPress={() => handlePressChat(item.otherUser)}
           >
-            <Image source={{ uri: item.photo }} style={styles.pic} />
+            <Image
+              source={{
+                uri: item?.otherUser?.photo
+                  ? `${server}storage/${item?.otherUser?.photo}`
+                  : `${server}img/random_location.jpg`,
+              }}
+              style={styles.pic}
+            />
             <View style={styles.chatInfo}>
               <Text
                 style={styles.username}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
-                {item.username}
+                {item.otherUser.person.username}
               </Text>
               <Text
                 style={styles.lastMessage}

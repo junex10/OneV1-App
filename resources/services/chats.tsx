@@ -19,6 +19,15 @@ const ChatService = {
       throw error;
     }
   },
+  getChats: async (user_id: number) => {
+    try {
+      const response = await api.post(`${API}app/chat/getChats`, { user_id });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
 };
 
 export default ChatService;
