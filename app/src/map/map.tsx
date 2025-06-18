@@ -32,7 +32,6 @@ const Map: React.FC = () => {
   const [loadingOnes, setLoadingOnes] = useState(true);
   const [heading, setHeading] = useState(0);
   const [events, setEvents] = useState([]);
-  const [zoom, setZoom] = useState(0.01);
   const [showDirection, setShowDirection] = useState<boolean>(false); // -> Show message about go to a place
   const [hasArrived, setHasArrived] = useState(false);
   const [currentPlace, setCurrentPlace] = useState<any>(null); // -> will store the place selected to ride
@@ -41,8 +40,12 @@ const Map: React.FC = () => {
   const [currentEvent, setCurrentEvent] = useState<any>(null);
   const [user, setUser] = useState(null);
   const [seekingEvent, setSeekingEvent] = useState<boolean>(false); // -> will indicate whenever the user is in process of seek an event and hide tab bar
+  const [zoom, setZoom] = useState(defaultZoom);
+  const [leftEvent, setLeftEvent] = useState(false); // -> will show a modal whenever you left an current event
 
   const mapRef = useRef<MapView>(null);
+
+  const getDeltaForZoom = (zoomLevel: number) => 360 / Math.pow(2, zoomLevel); // -> This adjust the zoom level
 
   const animateZoom = (newZoom: number) => {
     if (mapRef.current && getLocation?.coords) {
@@ -79,6 +82,7 @@ const Map: React.FC = () => {
       setEvents(removingEvents); // -> We remove every other marker but the one selected
 
       animateZoom(defaultZoom);
+      setZoom(defaultZoom); // -> We update our current zoom
       return;
     }
 
@@ -90,6 +94,7 @@ const Map: React.FC = () => {
       "CURRENT COORDS"
     );
     animateZoom(12);
+    setZoom(12); // -> We update our current zoom
 
     const data = await Events.getEvents({
       latitude: getLocation.coords.latitude,
@@ -140,6 +145,7 @@ const Map: React.FC = () => {
       setEvents([]);
       // We restart the zoom
       animateZoom(defaultZoom);
+      setSeekingEvent(false);
 
       return;
     }
@@ -225,6 +231,7 @@ const Map: React.FC = () => {
       setEvents(removingEvents); // -> We remove every other marker but the one selected
 
       setCurrentEvent(null); // -> Will set off the currentEvent because you just walk away from it
+      setLeftEvent(true); // -> will show up whenever my left an current event
     }
   }, [getLocation?.coords, hasArrived, currentEvent]);
 
@@ -257,6 +264,16 @@ const Map: React.FC = () => {
         timeout={4000}
       />
 
+      {/**  Modal that pop up whenever you left an event */}
+
+      <CustomModal
+        visible={leftEvent}
+        title="Left event!"
+        message="You have left the event."
+        onClose={() => setLeftEvent(false)}
+        timeout={4000}
+      />
+
       {/**  Search One */}
       <View style={styles.searchBarContainer}>
         <TextInput
@@ -267,6 +284,41 @@ const Map: React.FC = () => {
           placeholderTextColor={Colors.gray}
         />
       </View>
+      {!currentPlace && (
+        <View style={{ position: "absolute", top: 140, right: 20, zIndex: 30 }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: Colors.blue_dark_2,
+              borderRadius: 20,
+              padding: 10,
+              marginBottom: 10,
+              alignItems: "center",
+            }}
+            onPress={() => {
+              const newZoom = zoom + 1;
+              setZoom(newZoom);
+              animateZoom(newZoom);
+            }}
+          >
+            <Ionicons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              backgroundColor: Colors.blue_dark_2,
+              borderRadius: 20,
+              padding: 10,
+              alignItems: "center",
+            }}
+            onPress={() => {
+              const newZoom = zoom - 1;
+              setZoom(newZoom);
+              animateZoom(newZoom);
+            }}
+          >
+            <Ionicons name="remove" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <MapView
         ref={mapRef}
@@ -278,8 +330,8 @@ const Map: React.FC = () => {
             ? {
                 latitude: getLocation.coords.latitude,
                 longitude: getLocation.coords.longitude,
-                latitudeDelta: zoom,
-                longitudeDelta: zoom,
+                latitudeDelta: getDeltaForZoom(defaultZoom),
+                longitudeDelta: getDeltaForZoom(defaultZoom),
               }
             : undefined
         }
@@ -288,8 +340,8 @@ const Map: React.FC = () => {
             ? {
                 latitude: getLocation.coords.latitude,
                 longitude: getLocation.coords.longitude,
-                latitudeDelta: zoom,
-                longitudeDelta: zoom,
+                latitudeDelta: getDeltaForZoom(defaultZoom),
+                longitudeDelta: getDeltaForZoom(defaultZoom),
               }
             : undefined
         }
@@ -297,6 +349,7 @@ const Map: React.FC = () => {
         zoomEnabled={true}
         zoomControlEnabled={false}
         customMapStyle={mapCustomStyle}
+        showsMyLocationButton={false}
       >
         {/**  Show this when we wanna go that place chose */}
         {currentPlace && !hasArrived && getLocation?.coords && (
@@ -329,7 +382,7 @@ const Map: React.FC = () => {
             getLocation.coords.longitude,
             Number(currentPlace?.latitude),
             Number(currentPlace?.longitude)
-          ) && ( // 10 meters threshold
+          ) > meterThreshold && ( // 10 meters threshold
             <Marker
               coordinate={{
                 latitude: Number(currentPlace?.latitude),
