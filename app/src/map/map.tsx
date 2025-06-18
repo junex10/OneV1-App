@@ -38,7 +38,7 @@ const Map: React.FC = () => {
   const [currentPlace, setCurrentPlace] = useState<any>(null); // -> will store the place selected to ride
   const [currentRide, setCurrentRide] = useState(false); // -> will indicate whenever you're on the road to currentPlace
   const [showArrivedModal, setShowArrivedModal] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState(null);
+  const [currentEvent, setCurrentEvent] = useState<any>(null);
   const [user, setUser] = useState(null);
   const [seekingEvent, setSeekingEvent] = useState<boolean>(false); // -> will indicate whenever the user is in process of seek an event and hide tab bar
 
@@ -162,6 +162,12 @@ const Map: React.FC = () => {
       });
     })();
 
+    return () => {
+      subscription && subscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     // We verify if we have logged in
 
     (async () => {
@@ -203,10 +209,24 @@ const Map: React.FC = () => {
       animateZoom(defaultZoom);
     }
 
-    return () => {
-      subscription && subscription.remove();
-    };
-  }, [getLocation?.coords, hasArrived]);
+    // LEFT the event: if currentEvent is set, but user is now outside the threshold
+    if (
+      getLocation?.coords &&
+      getDistanceFromLatLonInMeters(
+        getLocation.coords.latitude,
+        getLocation.coords.longitude,
+        Number(currentEvent?.latitude),
+        Number(currentEvent?.longitude)
+      ) > meterThreshold
+    ) {
+      const removingEvents = events.filter(
+        (item: any) => item?.id == currentPlace?.id
+      );
+      setEvents(removingEvents); // -> We remove every other marker but the one selected
+
+      setCurrentEvent(null); // -> Will set off the currentEvent because you just walk away from it
+    }
+  }, [getLocation?.coords, hasArrived, currentEvent]);
 
   return (
     <View style={styles.container}>
@@ -309,7 +329,7 @@ const Map: React.FC = () => {
             getLocation.coords.longitude,
             Number(currentPlace?.latitude),
             Number(currentPlace?.longitude)
-          ) > meterThreshold && ( // 10 meters threshold
+          ) && ( // 10 meters threshold
             <Marker
               coordinate={{
                 latitude: Number(currentPlace?.latitude),
