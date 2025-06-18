@@ -40,6 +40,7 @@ const Map: React.FC = () => {
   const [showArrivedModal, setShowArrivedModal] = useState(false);
   const [currentEvent, setCurrentEvent] = useState(null);
   const [user, setUser] = useState(null);
+  const [seekingEvent, setSeekingEvent] = useState<boolean>(false); // -> will indicate whenever the user is in process of seek an event and hide tab bar
 
   const mapRef = useRef<MapView>(null);
 
@@ -62,6 +63,24 @@ const Map: React.FC = () => {
   const placesNearby = async () => {
     if (!getLocation?.coords)
       return Alert.alert("We couldn't get your current location");
+
+    if (events.length > 0) {
+      // We reset the values if we already looked up places
+      setCurrentEvent(currentPlace); // -> We store the current event for future references
+
+      setCurrentPlace(null); // -> Current place
+      setCurrentRide(false); // -> We set in false to show normal map
+      setShowDirection(false); // -> We close the direction
+      setSeekingEvent(false); // we reset the seeking event cuz we're not seeking anymore
+
+      const removingEvents = events.filter(
+        (item: any) => item?.id == currentPlace?.id
+      );
+      setEvents(removingEvents); // -> We remove every other marker but the one selected
+
+      animateZoom(defaultZoom);
+      return;
+    }
 
     console.log(
       {
@@ -108,6 +127,7 @@ const Map: React.FC = () => {
     setShowDirection(true);
     setHasArrived(false);
     setCurrentPlace(eventData);
+    setSeekingEvent(true);
   };
 
   const acceptRide = async (ride: boolean) => {
@@ -173,6 +193,7 @@ const Map: React.FC = () => {
       setCurrentPlace(null); // -> Current place
       setCurrentRide(false); // -> We set in false to show normal map
       setShowDirection(false); // -> We close the direction
+      setSeekingEvent(false); // we reset the seeking event cuz we're not seeking anymore
 
       const removingEvents = events.filter(
         (item: any) => item?.id == currentPlace?.id
@@ -392,60 +413,66 @@ const Map: React.FC = () => {
           </View>
         </View>
       )}
-      <View style={styles.fabNavContainer}>
-        {user && (
-          <TouchableOpacity
-            style={styles.fabNavItem}
-            onPress={() => router.push("/src/chat/friends-list")} // -> We redirect to our friends list
-          >
-            <Ionicons name="people-outline" size={28} color={Colors.purple} />
+      {!seekingEvent && (
+        <View style={styles.fabNavContainer}>
+          {user && (
+            <TouchableOpacity
+              style={styles.fabNavItem}
+              onPress={() => router.push("/src/chat/friends-list")} // -> We redirect to our friends list
+            >
+              <Ionicons name="people-outline" size={28} color={Colors.purple} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.fabNavItem} onPress={placesNearby}>
+            <Ionicons name="location-outline" size={28} color={Colors.purple} />
           </TouchableOpacity>
-        )}
-        <TouchableOpacity style={styles.fabNavItem} onPress={placesNearby}>
-          <Ionicons name="location-outline" size={28} color={Colors.purple} />
-        </TouchableOpacity>
-        {!currentEvent && user ? ( // -> Add new event, show button where you arent in a current event, you need to log in first
-          <TouchableOpacity style={styles.fabNavCenter} onPress={() => {}}>
-            <Ionicons name="add-outline" size={32} color="#fff" />
-          </TouchableOpacity>
-        ) : (
-          <>
-            {currentEvent && ( // -> Current event joined
-              <TouchableOpacity style={styles.fabNavItem} onPress={() => {}}>
+          {!currentEvent && user ? ( // -> Add new event, show button where you arent in a current event, you need to log in first
+            <TouchableOpacity style={styles.fabNavCenter} onPress={() => {}}>
+              <Ionicons name="add-outline" size={32} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            <>
+              {currentEvent && ( // -> Current event joined
+                <TouchableOpacity style={styles.fabNavItem} onPress={() => {}}>
+                  <Ionicons
+                    name="diamond-outline"
+                    size={28}
+                    color={Colors.purple}
+                  />
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+          {!user ? (
+            <TouchableOpacity
+              style={styles.fabNavItem}
+              onPress={() => router.push("/src/login/login")}
+            >
+              <Ionicons name="log-in-outline" size={28} color={Colors.purple} />
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={styles.fabNavItem}
+                onPress={() => router.push("/src/profile/profile")}
+              >
                 <Ionicons
-                  name="diamond-outline"
+                  name="person-outline"
                   size={28}
                   color={Colors.purple}
                 />
               </TouchableOpacity>
-            )}
-          </>
-        )}
-        {!user ? (
-          <TouchableOpacity
-            style={styles.fabNavItem}
-            onPress={() => router.push("/src/login/login")}
-          >
-            <Ionicons name="log-in-outline" size={28} color={Colors.purple} />
-          </TouchableOpacity>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={styles.fabNavItem}
-              onPress={() => router.push("/src/profile/profile")}
-            >
-              <Ionicons name="person-outline" size={28} color={Colors.purple} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.fabNavItem} onPress={logout}>
-              <Ionicons
-                name="log-out-outline"
-                size={28}
-                color={Colors.purple}
-              />
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
+              <TouchableOpacity style={styles.fabNavItem} onPress={logout}>
+                <Ionicons
+                  name="log-out-outline"
+                  size={28}
+                  color={Colors.purple}
+                />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      )}
     </View>
   );
 };
