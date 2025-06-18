@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
@@ -19,6 +20,8 @@ import { CustomModal, Storage } from "../../../resources/utils";
 import { useLocation } from "../../../resources/providers/location";
 import { mapCustomStyle, Colors } from "./../../../resources/utils/global";
 import Constants from "expo-constants";
+
+const { width, height } = Dimensions.get("window");
 
 const Map: React.FC = () => {
   const defaultZoom = 16;
@@ -42,6 +45,7 @@ const Map: React.FC = () => {
   const [seekingEvent, setSeekingEvent] = useState<boolean>(false); // -> will indicate whenever the user is in process of seek an event and hide tab bar
   const [zoom, setZoom] = useState(defaultZoom);
   const [leftEvent, setLeftEvent] = useState(false); // -> will show a modal whenever you left an current event
+  const [showSearchTab, setShowSearchTab] = useState(false);
 
   const mapRef = useRef<MapView>(null);
 
@@ -160,6 +164,11 @@ const Map: React.FC = () => {
     router.replace("/");
   };
 
+  const searchOne = (text: string) => {
+    setSearch(text);
+    console.log(text, " HERE ");
+  };
+
   useEffect(() => {
     let subscription: Location.LocationSubscription;
     (async () => {
@@ -276,14 +285,78 @@ const Map: React.FC = () => {
 
       {/**  Search One */}
       <View style={styles.searchBarContainer}>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Find your One"
-          value={search}
-          onChangeText={setSearch}
-          placeholderTextColor={Colors.gray}
-        />
+        <View style={styles.searchBar}>
+          <Ionicons
+            name="search"
+            size={20}
+            color={Colors.gray}
+            style={{ marginRight: 10 }}
+          />
+          <TextInput
+            style={styles.searchBarInput}
+            placeholder="Find your One"
+            value={search}
+            onChangeText={searchOne}
+            placeholderTextColor={Colors.gray}
+            underlineColorAndroid="transparent"
+            onFocus={() => setShowSearchTab(true)}
+            onBlur={() => setShowSearchTab(true)}
+          />
+        </View>
       </View>
+      {/**  Event search */}
+      {showSearchTab && (
+        <View style={styles.searchTab}>
+          {/* Arrow to hide the tab */}
+          <TouchableOpacity
+            style={styles.hideTabArrow}
+            onPress={() => setShowSearchTab(false)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-up-outline" size={28} color={Colors.gray} />
+          </TouchableOpacity>
+          {events.length === 0 && (
+            <Text style={styles.noEventsText}>No events found.</Text>
+          )}
+          {events.map((event: any, idx) => (
+            <TouchableOpacity
+              key={event.id || idx}
+              style={[
+                styles.eventItem,
+                idx === 1 && styles.eventItemActive, // Example: highlight the second item
+              ]}
+              onPress={() => {
+                setShowSearchTab(false);
+                getEvent(event);
+              }}
+              activeOpacity={0.8}
+            >
+              <View
+                style={[
+                  styles.eventIconBox,
+                  { backgroundColor: Colors.purple },
+                ]}
+              >
+                {event.main_pic ? (
+                  <Image
+                    source={{ uri: event.main_pic }}
+                    style={styles.eventIcon}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Ionicons name="location-outline" size={22} color="#fff" />
+                )}
+              </View>
+              <View style={styles.eventInfo}>
+                <Text style={styles.eventTitle}>{event.content}</Text>
+                <Text style={styles.eventTime}>
+                  {event.start_time || "No time"}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
       {!currentPlace && (
         <View style={{ position: "absolute", top: 140, right: 20, zIndex: 30 }}>
           <TouchableOpacity
@@ -634,17 +707,91 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.blue_dark_2,
-    color: Colors.gray,
     borderRadius: 24,
-    paddingHorizontal: 25,
-    paddingVertical: 15,
-    fontSize: 16,
-    elevation: 2,
-    shadowColor: Colors.gray,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    elevation: 4,
+    shadowColor: "#000",
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
+  },
+  searchBarInput: {
+    flex: 1,
+    color: Colors.gray,
+    fontSize: 16,
+    padding: 0,
+    backgroundColor: "transparent",
+  },
+  searchTab: {
+    position: "absolute",
+    top: height / 3.5, // just below the search bar
+    left: 16,
+    right: 16,
+    backgroundColor: Colors.blue_dark,
+    borderRadius: 18,
+    paddingVertical: 8,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    zIndex: 30,
+    maxHeight: 320,
+  },
+  eventItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: "transparent",
+    borderRadius: 14,
+    marginBottom: 6,
+  },
+  eventItemActive: {
+    backgroundColor: Colors.blue_dark_2,
+  },
+  eventIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
+  },
+  eventIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+  },
+  eventInfo: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  eventTitle: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  eventTime: {
+    color: Colors.gray,
+    fontSize: 13,
+  },
+  hideTabArrow: {
+    alignSelf: "center",
+    marginBottom: 8,
+    backgroundColor: Colors.blue_dark_2,
+    borderRadius: 16,
+    padding: 2,
+  },
+  noEventsText: {
+    color: Colors.gray,
+    textAlign: "center",
+    padding: 20,
   },
   placeMarker: {
     backgroundColor: Colors.blue_dark_2,
