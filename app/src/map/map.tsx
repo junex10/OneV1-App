@@ -329,7 +329,7 @@ const Map: React.FC = () => {
             getLocation.coords.longitude,
             Number(currentPlace?.latitude),
             Number(currentPlace?.longitude)
-          ) > meterThreshold && ( // 10 meters threshold
+          ) && ( // 10 meters threshold
             <Marker
               coordinate={{
                 latitude: Number(currentPlace?.latitude),
