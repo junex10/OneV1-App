@@ -179,7 +179,6 @@ const Map: React.FC = () => {
       longitude: getLocation.coords.longitude,
       search: text,
     });
-    console.log(data, "data here");
     setEventsList(data?.places);
   };
 
@@ -366,6 +365,35 @@ const Map: React.FC = () => {
                   <Text style={styles.eventCardTitle} numberOfLines={2}>
                     {item.content}
                   </Text>
+                  {/* People avatars row */}
+                  {item.people && item.people.length > 0 && (
+                    <View style={styles.eventCardPeopleRow}>
+                      {item?.people
+                        .slice(0, 5)
+                        .map((person: any, idx: number) => (
+                          <Image
+                            key={person?.id || idx}
+                            source={{
+                              uri: person?.photo
+                                ? `${server}storage/${person?.photo}`
+                                : `${server}img/random_location.jpg`,
+                            }}
+                            style={[
+                              styles.eventCardPersonAvatar,
+                              { marginLeft: idx === 0 ? 0 : -12 },
+                            ]}
+                            resizeMode="cover"
+                          />
+                        ))}
+                      {item?.people?.length > 5 && (
+                        <View style={styles.eventCardMorePeople}>
+                          <Text style={styles.eventCardMorePeopleText}>
+                            +{item?.people?.length - 5}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
                   <View style={styles.eventCardFooter}>
                     <Image
                       source={{
@@ -908,6 +936,36 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     zIndex: 100,
+  },
+  eventCardPeopleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    marginTop: 2,
+  },
+  eventCardPersonAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: Colors.blue_dark,
+    backgroundColor: Colors.gray,
+  },
+  eventCardMorePeople: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.purple,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: -12,
+    borderWidth: 2,
+    borderColor: Colors.blue_dark,
+  },
+  eventCardMorePeopleText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 13,
   },
 });
 
