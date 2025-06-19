@@ -9,6 +9,7 @@ import {
   Alert,
   Image,
   Dimensions,
+  FlatList,
 } from "react-native";
 import { useRouter } from "expo-router";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
@@ -22,6 +23,7 @@ import { mapCustomStyle, Colors } from "./../../../resources/utils/global";
 import Constants from "expo-constants";
 
 const { width, height } = Dimensions.get("window");
+const server = Constants.expoConfig?.extra?.SERVER;
 
 const Map: React.FC = () => {
   const defaultZoom = 16;
@@ -30,6 +32,9 @@ const Map: React.FC = () => {
   const router = useRouter();
   const getLocation: any = useLocation();
   const apiKey = Constants.expoConfig?.extra?.GOOGLE_API_KEY;
+  const eventsListRef = useRef<FlatList>(null);
+  const searchInputRef = useRef<TextInput>(null);
+
   const [search, setSearch] = useState("");
   const [loadingInitialModel, setloadingInitialModel] = useState(true);
   const [loadingOnes, setLoadingOnes] = useState(true);
@@ -46,6 +51,8 @@ const Map: React.FC = () => {
   const [zoom, setZoom] = useState(defaultZoom);
   const [leftEvent, setLeftEvent] = useState(false); // -> will show a modal whenever you left an current event
   const [showSearchTab, setShowSearchTab] = useState(false);
+  const [eventsList, setEventsList] = useState([]); // -> will contain a list of events to show when you're searching in the search bar
+  const [searchEditable, setSearchEditable] = useState<boolean>(true); // will control the editable of the search bar
 
   const mapRef = useRef<MapView>(null);
 
@@ -164,9 +171,16 @@ const Map: React.FC = () => {
     router.replace("/");
   };
 
-  const searchOne = (text: string) => {
+  const searchOne = async (text: string) => {
     setSearch(text);
-    console.log(text, " HERE ");
+
+    const data = await Events.getEvents({
+      latitude: getLocation.coords.latitude,
+      longitude: getLocation.coords.longitude,
+      search: text,
+    });
+    console.log(data, "data here");
+    setEventsList(data?.places);
   };
 
   useEffect(() => {
@@ -293,68 +307,96 @@ const Map: React.FC = () => {
             style={{ marginRight: 10 }}
           />
           <TextInput
+            ref={searchInputRef}
             style={styles.searchBarInput}
             placeholder="Find your One"
             value={search}
-            onChangeText={searchOne}
             placeholderTextColor={Colors.gray}
             underlineColorAndroid="transparent"
-            onFocus={() => setShowSearchTab(true)}
-            onBlur={() => setShowSearchTab(true)}
+            onFocus={() => {
+              setShowSearchTab(true);
+              setSearchEditable(false);
+            }}
+            onBlur={() => {
+              setShowSearchTab(true);
+              setSearchEditable(false);
+            }}
+            editable={searchEditable}
           />
         </View>
       </View>
-      {/**  Event search */}
+      {/**  Event search tab */}
       {showSearchTab && (
-        <View style={styles.searchTab}>
-          {/* Arrow to hide the tab */}
-          <TouchableOpacity
-            style={styles.hideTabArrow}
-            onPress={() => setShowSearchTab(false)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="chevron-up-outline" size={28} color={Colors.gray} />
-          </TouchableOpacity>
-          {events.length === 0 && (
-            <Text style={styles.noEventsText}>No events found.</Text>
-          )}
-          {events.map((event: any, idx) => (
-            <TouchableOpacity
-              key={event.id || idx}
-              style={[
-                styles.eventItem,
-                idx === 1 && styles.eventItemActive, // Example: highlight the second item
-              ]}
-              onPress={() => {
-                setShowSearchTab(false);
-                getEvent(event);
-              }}
-              activeOpacity={0.8}
-            >
-              <View
-                style={[
-                  styles.eventIconBox,
-                  { backgroundColor: Colors.purple },
-                ]}
+        <View style={styles.fullScreenTab}>
+          {/* Search bar at the top of the tab */}
+          <View style={styles.tabSearchBarContainer}>
+            <View style={styles.tabSearchBar}>
+              <Ionicons
+                name="search"
+                size={20}
+                color={Colors.gray}
+                style={{ marginRight: 10 }}
+              />
+              <TextInput
+                style={styles.tabSearchBarInput}
+                placeholder="Search events"
+                value={search}
+                onChangeText={searchOne}
+                placeholderTextColor={Colors.gray}
+                underlineColorAndroid="transparent"
+                autoFocus
+              />
+            </View>
+          </View>
+          <FlatList
+            data={eventsList}
+            keyExtractor={(item: any, idx) =>
+              item.id?.toString() || idx.toString()
+            }
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.eventCard}
+                onPress={() => {
+                  setShowSearchTab(false);
+                  getEvent(item);
+                }}
+                activeOpacity={0.9}
               >
-                {event.main_pic ? (
-                  <Image
-                    source={{ uri: event.main_pic }}
-                    style={styles.eventIcon}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Ionicons name="location-outline" size={22} color="#fff" />
-                )}
-              </View>
-              <View style={styles.eventInfo}>
-                <Text style={styles.eventTitle}>{event.content}</Text>
-                <Text style={styles.eventTime}>
-                  {event.start_time || "No time"}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+                <View style={styles.eventCardContent}>
+                  <Text style={styles.eventCardTitle} numberOfLines={2}>
+                    {item.content}
+                  </Text>
+                  <View style={styles.eventCardFooter}>
+                    <Image
+                      source={{
+                        uri: item.main_pic
+                          ? `${server}storage/${item.main_pic}`
+                          : `${server}img/random_location.jpg`,
+                      }}
+                      style={styles.eventCardAvatar}
+                      resizeMode="cover"
+                    />
+                    <Text style={styles.eventCardAddress} numberOfLines={1}>
+                      {item.address}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={{ padding: 24, paddingTop: 80 }}
+            showsVerticalScrollIndicator={false}
+          />
+          {/* Floating close button at bottom right */}
+          <TouchableOpacity
+            style={styles.fabCloseButton}
+            onPress={() => {
+              setShowSearchTab(false);
+              searchInputRef.current?.blur();
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="close" size={32} color="#fff" />
+          </TouchableOpacity>
         </View>
       )}
       {!currentPlace && (
@@ -675,29 +717,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
   },
-  bottomNav: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 64,
-    flexDirection: "row",
-    backgroundColor: Colors.blue_dark_2,
-    borderTopWidth: 1,
-    borderTopColor: Colors.gray,
-    justifyContent: "space-around",
-    alignItems: "center",
-    zIndex: 10,
-  },
   navItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  navLabel: {
-    fontSize: 12,
-    color: Colors.gray,
-    marginTop: 2,
   },
   searchBarContainer: {
     position: "absolute",
@@ -729,7 +752,7 @@ const styles = StyleSheet.create({
   searchTab: {
     position: "absolute",
     top: height / 3.5, // just below the search bar
-    left: 16,
+    left: 2,
     right: 16,
     backgroundColor: Colors.blue_dark,
     borderRadius: 18,
@@ -741,57 +764,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     zIndex: 30,
     maxHeight: 320,
-  },
-  eventItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    backgroundColor: "transparent",
-    borderRadius: 14,
-    marginBottom: 6,
-  },
-  eventItemActive: {
-    backgroundColor: Colors.blue_dark_2,
-  },
-  eventIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 16,
-  },
-  eventIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-  },
-  eventInfo: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  eventTitle: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-    marginBottom: 2,
-  },
-  eventTime: {
-    color: Colors.gray,
-    fontSize: 13,
-  },
-  hideTabArrow: {
-    alignSelf: "center",
-    marginBottom: 8,
-    backgroundColor: Colors.blue_dark_2,
-    borderRadius: 16,
-    padding: 2,
-  },
-  noEventsText: {
-    color: Colors.gray,
-    textAlign: "center",
-    padding: 20,
+    width: width,
   },
   placeMarker: {
     backgroundColor: Colors.blue_dark_2,
@@ -801,9 +774,6 @@ const styles = StyleSheet.create({
   placeMarkerImg: {
     width: 20,
     height: 20,
-  },
-  placesContainer: {
-    padding: 500,
   },
   destinationConfirm: {
     position: "absolute",
@@ -843,6 +813,101 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  fullScreenTab: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: Colors.blue_dark,
+    zIndex: 50,
+    justifyContent: "flex-start",
+  },
+  eventCard: {
+    backgroundColor: Colors.blue_dark_2,
+    borderRadius: 24,
+    marginBottom: 24,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  eventCardContent: {
+    flexDirection: "column",
+  },
+  eventCardTitle: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 20,
+    marginBottom: 18,
+  },
+  eventCardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  eventCardAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: Colors.purple,
+    backgroundColor: Colors.gray,
+  },
+  eventCardAddress: {
+    color: Colors.gray,
+    fontSize: 15,
+    flex: 1,
+  },
+  tabSearchBarContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    backgroundColor: Colors.blue_dark,
+    paddingTop: 32,
+    paddingBottom: 12,
+    paddingHorizontal: 24,
+  },
+  tabSearchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.blue_dark_2,
+    borderRadius: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  tabSearchBarInput: {
+    flex: 1,
+    color: Colors.gray,
+    fontSize: 16,
+    padding: 0,
+    backgroundColor: "transparent",
+  },
+  fabCloseButton: {
+    position: "absolute",
+    bottom: 32,
+    right: 32,
+    backgroundColor: Colors.purple,
+    borderRadius: 32,
+    width: 56,
+    height: 56,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    zIndex: 100,
   },
 });
 

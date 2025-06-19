@@ -1,4 +1,3 @@
-import { Coordinates } from "./../../resources/interfaces";
 import Constants from "expo-constants";
 import { api } from "./../../resources/providers/api";
 
