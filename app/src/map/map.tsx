@@ -643,7 +643,10 @@ const Map: React.FC = () => {
             <Ionicons name="location-outline" size={28} color={Colors.purple} />
           </TouchableOpacity>
           {!currentEvent && user ? ( // -> Add new event, show button where you arent in a current event, you need to log in first
-            <TouchableOpacity style={styles.fabNavCenter} onPress={() => {}}>
+            <TouchableOpacity
+              style={styles.fabNavCenter}
+              onPress={() => router.push("src/event/first-new-event")}
+            >
               <Ionicons name="add-outline" size={32} color="#fff" />
             </TouchableOpacity>
           ) : (

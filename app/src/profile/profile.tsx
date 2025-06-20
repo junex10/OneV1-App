@@ -205,15 +205,7 @@ const Profile: React.FC = () => {
                 {user?.user?.person?.username}
               </Text>
               <Text style={styles.email}>{user?.user?.email}</Text>
-              <View style={styles.addressRow}>
-                {/* <Ionicons
-              name="location-outline"
-              size={15}
-              color={Colors.purple}
-              style={{ marginRight: 4 }}
-            />
-            <Text style={styles.address}>{user.address}</Text>*/}
-              </View>
+              <View style={styles.addressRow}></View>
               <Text style={styles.subscribers}>
                 {user?.person?.subscribers
                   ? Number(user?.user?.person?.subscribers)
@@ -231,26 +223,6 @@ const Profile: React.FC = () => {
           </TouchableOpacity>
         )}
       </View>
-      {/*<TouchableOpacity
-        style={[
-          styles.subscribeBtn,
-          {
-            backgroundColor: subscribed ? Colors.gray : Colors.purple,
-          },
-        ]}
-      >
-       <View style={styles.subscribeContent}>
-          <Text style={styles.subscribeText}>Subscribe</Text>
-          {subscribed && (
-            <Ionicons
-              name="checkmark-outline"
-              size={18}
-              color="#fff"
-              style={{ marginLeft: 8 }}
-            />
-          )}
-        </View> Add this to personal subscriber
-      </TouchableOpacity>*/}
       <View style={styles.tabs}>
         <TouchableOpacity
           style={styles.tab}

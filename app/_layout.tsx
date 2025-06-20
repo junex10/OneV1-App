@@ -5,6 +5,7 @@ const LOGIN = "src/login/";
 const MAP = "src/map/";
 const PROFILE = "src/profile/";
 const CHAT = "src/chat/";
+const EVENT = "src/event/";
 
 export default function RootLayout() {
   return (
@@ -79,6 +80,16 @@ export default function RootLayout() {
         <Stack.Screen
           name={`${CHAT}friend-profile`}
           options={{ title: "Friend profile", headerShown: false }}
+        />
+
+        {/**  EVENTS */}
+        <Stack.Screen
+          name={`${EVENT}first-new-event`}
+          options={{ title: "New event one", headerShown: false }}
+        />
+        <Stack.Screen
+          name={`${EVENT}second-new-event`}
+          options={{ title: "New event second", headerShown: false }}
         />
       </Stack>
     </Providers>
