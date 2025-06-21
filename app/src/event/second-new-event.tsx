@@ -14,21 +14,24 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import DatePicker from "react-native-date-picker";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Colors, mapCustomStyle } from "../../../resources/utils/global";
 import { useLocation } from "../../../resources/providers/location";
 import Constants from "expo-constants";
+import * as FileSystem from "expo-file-system";
 
-const apiKey = Constants.expoConfig?.extra?.GOOGLE_API_KEY;
-const mapRef = useRef<MapView>(null);
-
-const getDeltaForZoom = (zoomLevel: number) => 360 / Math.pow(2, zoomLevel); // -> This adjust the zoom level
+interface Picture {
+  fileName: string | null | undefined;
+  mimeType: string | null | undefined;
+  base64: string | null | undefined;
+}
 
 const { width } = Dimensions.get("window");
 const IMAGE_SIZE = width * 0.82;
 const IMAGE_RADIUS = 22;
 const defaultZoom = 16;
 
+const getDeltaForZoom = (zoomLevel: number) => 360 / Math.pow(2, zoomLevel); // -> This adjust the zoom level
 // Dummy Google Map placeholder (replace with your map component)
 const GoogleMapTab = ({
   visible,
@@ -39,6 +42,7 @@ const GoogleMapTab = ({
   zoomOut,
   onPress,
   selectedCoords,
+  mapRef,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -48,6 +52,7 @@ const GoogleMapTab = ({
   zoomOut: () => void;
   onPress: (item: any) => void;
   selectedCoords: any;
+  mapRef: any;
 }) => (
   <Modal visible={visible} animationType="slide" transparent>
     <View style={styles.mapTabContainer}>
@@ -138,10 +143,13 @@ const GoogleMapTab = ({
 
 const SecondNewEvent: React.FC = () => {
   const { event } = useLocalSearchParams();
+  const mapRef = useRef<MapView>(null);
   const getLocation: any = useLocation();
+  const router = useRouter();
 
-  const [mainPic, setMainPic] = useState<string | null>(null);
-  const [content, setContent] = useState("");
+  const [mainPic, setMainPic] = useState<Picture | null>(null);
+  const [showMainPic, setShowMainPic] = useState<string>();
+  const [content, setContent] = useState<string>("");
   const [mapTabVisible, setMapTabVisible] = useState(false);
   const [form, setForm] = useState();
 
@@ -156,11 +164,18 @@ const SecondNewEvent: React.FC = () => {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [nextEnable, setNextEnable] = useState(false); // will enable next button to continue
 
   useEffect(() => {
     const eventForm = event ? JSON.parse(event as string) : null;
     setForm(eventForm);
-  }, []);
+
+    if (content.length > 0 && mainPic && selectedCoords) {
+      setNextEnable(true);
+    } else {
+      setNextEnable(false);
+    }
+  }, [content, mainPic, selectedCoords]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -170,7 +185,16 @@ const SecondNewEvent: React.FC = () => {
       quality: 0.8,
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setMainPic(result.assets[0].uri);
+      const selected = result.assets[0];
+      setShowMainPic(selected.uri);
+      const base64 = await FileSystem.readAsStringAsync(selected.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      setMainPic({
+        fileName: selected.fileName,
+        mimeType: selected.mimeType,
+        base64, // send base64 string
+      });
     }
   };
 
@@ -190,6 +214,38 @@ const SecondNewEvent: React.FC = () => {
     }
   };
 
+  const handleNext = async () => {
+    let formData = {};
+
+    if (startDate) {
+      formData = {
+        starting_event: startDate,
+      };
+    }
+    if (expireDate) {
+      formData = {
+        ...formData,
+        expiration_time: expireDate,
+      };
+    }
+
+    formData = {
+      ...formData,
+      main_pic: mainPic,
+      content,
+      latitude: selectedCoords?.latitude,
+      longitude: selectedCoords?.longitude,
+    };
+    if (nextEnable) {
+      router.push({
+        pathname: "/src/event/third-new-event",
+        params: {
+          event: JSON.stringify(formData),
+        },
+      });
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Main Pic */}
@@ -199,7 +255,7 @@ const SecondNewEvent: React.FC = () => {
         activeOpacity={0.85}
       >
         {mainPic ? (
-          <Image source={{ uri: mainPic }} style={styles.mainPic} />
+          <Image source={{ uri: showMainPic }} style={styles.mainPic} />
         ) : (
           <View style={styles.picPlaceholder}>
             <Ionicons name="camera" size={38} color={Colors.purple} />
@@ -215,7 +271,9 @@ const SecondNewEvent: React.FC = () => {
         placeholder="Describe your event..."
         placeholderTextColor={Colors.gray}
         value={content}
-        onChangeText={setContent}
+        onChangeText={(text) => {
+          setContent(text);
+        }}
         multiline
         numberOfLines={7}
         textAlignVertical="top"
@@ -304,7 +362,80 @@ const SecondNewEvent: React.FC = () => {
           setSelectedCoords({ latitude, longitude });
         }}
         selectedCoords={selectedCoords}
+        mapRef={mapRef}
       />
+
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          width: width,
+          position: "absolute",
+          bottom: 32,
+          left: 0,
+          paddingHorizontal: 28,
+        }}
+      >
+        <TouchableOpacity
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: nextEnable ? Colors.purple : Colors.gray,
+            borderRadius: 28,
+            paddingHorizontal: 18,
+            paddingVertical: 12,
+            elevation: 4,
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+          }}
+          onPress={handleNext}
+          activeOpacity={0.85}
+          disabled={!nextEnable}
+        >
+          <Ionicons name="arrow-forward" size={22} color="#fff" />
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: 16,
+              marginLeft: 10,
+            }}
+          >
+            Next
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: Colors.purple,
+            borderRadius: 28,
+            paddingHorizontal: 18,
+            paddingVertical: 12,
+            elevation: 4,
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+          }}
+          onPress={() => router.back()}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="arrow-undo" size={22} color="#fff" />
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: 16,
+              marginLeft: 10,
+            }}
+          >
+            Skip
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -337,7 +468,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   picContainer: {
-    width: IMAGE_SIZE,
+    width: width,
     height: IMAGE_SIZE * 0.56,
     borderRadius: IMAGE_RADIUS,
     backgroundColor: Colors.blue_gray,
@@ -416,6 +547,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
+    top: 100,
   },
   mapBtnText: {
     color: "#fff",
