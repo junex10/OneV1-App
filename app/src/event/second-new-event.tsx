@@ -17,8 +17,8 @@ import DatePicker from "react-native-date-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Colors, mapCustomStyle } from "../../../resources/utils/global";
 import { useLocation } from "../../../resources/providers/location";
-import Constants from "expo-constants";
 import * as FileSystem from "expo-file-system";
+import { Storage } from "../../../resources/utils";
 
 interface Picture {
   fileName: string | null | undefined;
@@ -146,12 +146,13 @@ const SecondNewEvent: React.FC = () => {
   const mapRef = useRef<MapView>(null);
   const getLocation: any = useLocation();
   const router = useRouter();
+  let formData = {};
 
   const [mainPic, setMainPic] = useState<Picture | null>(null);
   const [showMainPic, setShowMainPic] = useState<string>();
   const [content, setContent] = useState<string>("");
   const [mapTabVisible, setMapTabVisible] = useState(false);
-  const [form, setForm] = useState();
+  const [form, setForm] = useState<any>();
 
   // Date pickers
   const [showStartPicker, setShowStartPicker] = useState(false);
@@ -190,11 +191,12 @@ const SecondNewEvent: React.FC = () => {
       const base64 = await FileSystem.readAsStringAsync(selected.uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-      setMainPic({
+      const data_pic = {
         fileName: selected.fileName,
         mimeType: selected.mimeType,
         base64, // send base64 string
-      });
+      };
+      setMainPic(data_pic);
     }
   };
 
@@ -214,9 +216,7 @@ const SecondNewEvent: React.FC = () => {
     }
   };
 
-  const handleNext = async () => {
-    let formData = {};
-
+  const handleNext = () => {
     if (startDate) {
       formData = {
         starting_event: startDate,
@@ -231,7 +231,12 @@ const SecondNewEvent: React.FC = () => {
 
     formData = {
       ...formData,
-      main_pic: mainPic,
+      main_pic: {
+        uri: showMainPic,
+        fileName: mainPic?.fileName,
+        mimeType: mainPic?.mimeType,
+      },
+      title: form?.title,
       content,
       latitude: selectedCoords?.latitude,
       longitude: selectedCoords?.longitude,
@@ -432,7 +437,7 @@ const SecondNewEvent: React.FC = () => {
               marginLeft: 10,
             }}
           >
-            Skip
+            Back
           </Text>
         </TouchableOpacity>
       </View>

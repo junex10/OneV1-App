@@ -1,4 +1,5 @@
 import EventEmitter from "eventemitter3";
+import * as FileSystem from "expo-file-system";
 // Global functions/variables
 
 export const Colors = {
@@ -99,3 +100,15 @@ export const SocketEvents = {
 };
 
 export const eventBus = new EventEmitter();
+
+export const getBase64FromUri = async (uri: string) => {
+  try {
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return base64;
+  } catch (e) {
+    console.error("Failed to convert uri to base64:", e);
+    return null;
+  }
+};

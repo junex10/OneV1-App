@@ -91,6 +91,14 @@ export default function RootLayout() {
           name={`${EVENT}second-new-event`}
           options={{ title: "New event second", headerShown: false }}
         />
+        <Stack.Screen
+          name={`${EVENT}third-new-event`}
+          options={{ title: "New event third", headerShown: false }}
+        />
+        <Stack.Screen
+          name={`${EVENT}fourth-new-event`}
+          options={{ title: "New event Fourth", headerShown: false }}
+        />
       </Stack>
     </Providers>
   );

@@ -10,7 +10,17 @@ interface GetEventDTO {
 interface GetEventsByUserDTO {
   user_id: number;
 }
-
+interface SetEventDTO {
+  title: string;
+  user_id: number;
+  event_type_id: number;
+  main_pic: any;
+  content: string;
+  latitude: number;
+  longitude: number;
+  expiration_time?: Date;
+  starting_event?: Date;
+}
 const Events = {
   getEvents: async (coordinates: Coordinates) => {
     try {
@@ -24,11 +34,9 @@ const Events = {
       throw error;
     }
   },
-  setEvent: async (event: FormData) => {
+  setEvent: async (event: SetEventDTO) => {
     try {
-      const response = await api.post(`${API}app/events/setEvent`, event, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await api.post(`${API}app/events/setEvent`, event);
       return response.data;
     } catch (error) {
       console.error("Error fetching places:", error);
@@ -50,6 +58,26 @@ const Events = {
         `${API}app/events/getEventsByUser`,
         request
       );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
+  getEventsType: async () => {
+    try {
+      const response = await api.post(`${API}app/events/getEventsType`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
+  getEventsTypeById: async (event_type_id: number) => {
+    try {
+      const response = await api.post(`${API}app/events/getEventsTypeById`, {
+        event_type_id,
+      });
       return response.data;
     } catch (error) {
       console.error("Error fetching places:", error);
