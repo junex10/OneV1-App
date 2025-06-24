@@ -15,11 +15,13 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import {
   Colors,
+  eventBus,
   getBase64FromUri,
   mapCustomStyle,
+  SocketEvents,
 } from "../../../resources/utils/global";
 import { Events } from "../../../resources/services";
-import { Storage } from "../../../resources/utils";
+import { CustomModal, Storage } from "../../../resources/utils";
 
 const DEFAULT_LATITUDE = 37.7749;
 const DEFAULT_LONGITUDE = -122.4194;
@@ -31,6 +33,7 @@ const FourthNewEvent: React.FC = () => {
   const [form, setForm] = useState<any>();
   const [eventType, setEventType] = useState<any>();
   const [user, setUser] = useState<any>(null);
+  const [showCreatedEvent, setShowcreatedEvent] = useState(false);
 
   useEffect(() => {
     const eventForm = event ? JSON.parse(event as string) : null;
@@ -49,7 +52,7 @@ const FourthNewEvent: React.FC = () => {
     const base64 = await getBase64FromUri(form.main_pic?.uri);
     let formData = {
       ...form,
-      user_id: user.id,
+      user_id: user.user.id,
       main_pic: {
         ...form.main_pic,
         base64,
@@ -57,7 +60,8 @@ const FourthNewEvent: React.FC = () => {
     };
 
     try {
-      await Events.setEvent(formData);
+      const data = await Events.setEvent(formData);
+      await Storage.set("new_event_created", data);
       router.replace("/src/map/map");
     } catch (e) {
       Alert.alert("An error has ocurred");
@@ -81,32 +85,34 @@ const FourthNewEvent: React.FC = () => {
               <Text style={styles.statNumber}>Event</Text>
               <Text style={styles.statLabel}>{eventType?.name}</Text>
             </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>
-                {moment(form?.starting_event, [
-                  "HH:mm",
-                  moment.ISO_8601,
-                ]).format("HH:mm a")}
-              </Text>
-              <Text style={styles.statLabel}>Starting</Text>
-              {/* Add formatted date */}
-              <Text style={styles.statDate}>
-                {moment(form?.starting_event).format("MMM D, YYYY")}
-              </Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>
-                {moment(form?.expiration_time, [
-                  "HH:mm",
-                  moment.ISO_8601,
-                ]).format("HH:mm a")}
-              </Text>
-              <Text style={styles.statLabel}>Ending</Text>
-              {/* Add formatted date */}
-              <Text style={styles.statDate}>
-                {moment(form?.expiration_time).format("MMM D, YYYY")}
-              </Text>
-            </View>
+            {form?.starting_event && (
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>
+                  {moment(form?.starting_event, [
+                    "HH:mm",
+                    moment.ISO_8601,
+                  ]).format("HH:mm a")}
+                </Text>
+                <Text style={styles.statLabel}>Starting</Text>
+                <Text style={styles.statDate}>
+                  {moment(form?.starting_event).format("MMM D, YYYY")}
+                </Text>
+              </View>
+            )}
+            {form?.expiration_time && (
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>
+                  {moment(form?.expiration_time, [
+                    "HH:mm",
+                    moment.ISO_8601,
+                  ]).format("HH:mm a")}
+                </Text>
+                <Text style={styles.statLabel}>Ending</Text>
+                <Text style={styles.statDate}>
+                  {moment(form?.expiration_time).format("MMM D, YYYY")}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 

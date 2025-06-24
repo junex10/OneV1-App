@@ -19,7 +19,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { GoogleMaps, Events } from "./../../../resources/services";
 import { CustomModal, Storage } from "../../../resources/utils";
 import { useLocation } from "../../../resources/providers/location";
-import { mapCustomStyle, Colors } from "./../../../resources/utils/global";
+import {
+  mapCustomStyle,
+  Colors,
+  eventBus,
+  SocketEvents,
+} from "./../../../resources/utils/global";
 import Constants from "expo-constants";
 
 const { width, height } = Dimensions.get("window");
@@ -46,13 +51,15 @@ const Map: React.FC = () => {
   const [currentRide, setCurrentRide] = useState(false); // -> will indicate whenever you're on the road to currentPlace
   const [showArrivedModal, setShowArrivedModal] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<any>(null);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const [seekingEvent, setSeekingEvent] = useState<boolean>(false); // -> will indicate whenever the user is in process of seek an event and hide tab bar
   const [zoom, setZoom] = useState(defaultZoom);
   const [leftEvent, setLeftEvent] = useState(false); // -> will show a modal whenever you left an current event
+  const [eventCreated, setEventCreated] = useState(false); // -> will show a modal when you create an event
   const [showSearchTab, setShowSearchTab] = useState(false);
   const [eventsList, setEventsList] = useState([]); // -> will contain a list of events to show when you're searching in the search bar
   const [searchEditable, setSearchEditable] = useState<boolean>(true); // will control the editable of the search bar
+  const [newEventCreated, setNewEventCreated] = useState<boolean>(false); // When we create a new event, we'll skip the left event thing
 
   const mapRef = useRef<MapView>(null);
 
@@ -183,6 +190,16 @@ const Map: React.FC = () => {
   };
 
   useEffect(() => {
+    (async () => {
+      const newEvent = await Storage.get("new_event_created");
+      if (newEvent) {
+        setCurrentEvent(newEvent?.places);
+        setNewEventCreated(true); // We are the host, we dont apply the left event thing
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     let subscription: Location.LocationSubscription;
     (async () => {
       subscription = await Location.watchHeadingAsync((data) => {
@@ -208,7 +225,7 @@ const Map: React.FC = () => {
         <ActivityIndicator size="large" />;
       };
 
-    // We detect when they arrived at the place chose
+    // We detect when they arrived at the place chosen
     if (
       getLocation?.coords &&
       !hasArrived &&
@@ -247,13 +264,16 @@ const Map: React.FC = () => {
         Number(currentEvent?.longitude)
       ) > meterThreshold
     ) {
-      const removingEvents = events.filter(
-        (item: any) => item?.id == currentPlace?.id
-      );
-      setEvents(removingEvents); // -> We remove every other marker but the one selected
+      // We verify first if we create a new event, to avoid any error
+      if (!newEventCreated) {
+        const removingEvents = events.filter(
+          (item: any) => item?.id == currentPlace?.id
+        );
+        setEvents(removingEvents); // -> We remove every other marker but the one selected
 
-      setCurrentEvent(null); // -> Will set off the currentEvent because you just walk away from it
-      setLeftEvent(true); // -> will show up whenever my left an current event
+        setCurrentEvent(null); // -> Will set off the currentEvent because you just walk away from it
+        setLeftEvent(true); // -> will show up whenever my left an current event
+      }
     }
   }, [getLocation?.coords, hasArrived, currentEvent]);
 
@@ -293,6 +313,16 @@ const Map: React.FC = () => {
         title="Left event!"
         message="You have left the event."
         onClose={() => setLeftEvent(false)}
+        timeout={4000}
+      />
+
+      {/**  Modal that pop up once you create a new event */}
+
+      <CustomModal
+        visible={eventCreated}
+        title="Event created!"
+        message="You have created an new event!."
+        onClose={() => setEventCreated(false)}
         timeout={4000}
       />
 
