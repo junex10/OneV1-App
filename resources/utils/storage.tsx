@@ -23,6 +23,11 @@ const Storage = {
   async clear(): Promise<void> {
     await AsyncStorage.clear();
   },
+
+  async has(key: string): Promise<boolean> {
+    const value = await AsyncStorage.getItem(key);
+    return value !== null;
+  },
 };
 
 export default Storage;

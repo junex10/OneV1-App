@@ -189,12 +189,37 @@ const Map: React.FC = () => {
     setEventsList(data?.places);
   };
 
+  // We are checking if the current event that we created or in general is active
+  const isEventActive = (event: any) => {
+    if (!event?.starting_event || !event?.expiration_time) return false;
+    const now = new Date();
+    const start = new Date(event.starting_event);
+    const end = new Date(event.expiration_time);
+    return now >= start && now <= end;
+  };
+
   useEffect(() => {
+    // In case we are in maps and the event just pop up to started, we change it
+    eventBus.on(SocketEvents.NEW_EVENT_INCOMING, async (incomingEvent) => {
+      if (incomingEvent) {
+        if (isEventActive(incomingEvent?.places)) {
+          setCurrentEvent(incomingEvent?.places);
+          setNewEventCreated(true); // We are the host, we dont apply the left event thing
+        } else {
+          await Storage.remove("current_event");
+        }
+      }
+    });
+
     (async () => {
-      const newEvent = await Storage.get("new_event_created");
+      const newEvent = await Storage.get("current_event");
       if (newEvent) {
-        setCurrentEvent(newEvent?.places);
-        setNewEventCreated(true); // We are the host, we dont apply the left event thing
+        if (isEventActive(newEvent?.places)) {
+          setCurrentEvent(newEvent?.places);
+          setNewEventCreated(true); // We are the host, we dont apply the left event thing
+        } else {
+          await Storage.remove("current_event");
+        }
       }
     })();
   }, []);
@@ -672,7 +697,8 @@ const Map: React.FC = () => {
           <TouchableOpacity style={styles.fabNavItem} onPress={placesNearby}>
             <Ionicons name="location-outline" size={28} color={Colors.purple} />
           </TouchableOpacity>
-          {!currentEvent && user ? ( // -> Add new event, show button where you arent in a current event, you need to log in first
+          {user && (!currentEvent || !isEventActive(currentEvent)) ? ( // We must verify that there isnt any event on going, if there is any, we hide the button
+            // -> Add new event, show button where you arent in a current event, you need to log in first
             <TouchableOpacity
               style={styles.fabNavCenter}
               onPress={() => router.push("src/event/first-new-event")}
@@ -681,15 +707,19 @@ const Map: React.FC = () => {
             </TouchableOpacity>
           ) : (
             <>
-              {currentEvent && ( // -> Current event joined
-                <TouchableOpacity style={styles.fabNavItem} onPress={() => {}}>
-                  <Ionicons
-                    name="diamond-outline"
-                    size={28}
-                    color={Colors.purple}
-                  />
-                </TouchableOpacity>
-              )}
+              {currentEvent &&
+                isEventActive(currentEvent) && ( // -> Current event joined
+                  <TouchableOpacity
+                    style={styles.fabNavItem}
+                    onPress={() => {}}
+                  >
+                    <Ionicons
+                      name="diamond-outline"
+                      size={28}
+                      color={Colors.purple}
+                    />
+                  </TouchableOpacity>
+                )}
             </>
           )}
           {!user ? (

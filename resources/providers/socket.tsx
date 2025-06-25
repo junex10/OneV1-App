@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import Constants from "expo-constants";
-import { SocketEvents } from "../utils/global";
-import { eventBus } from "../utils/global";
+import { SocketEvents, eventBus } from "../utils/global";
+import { Storage } from "../utils";
 
 const SOCKET_URL = Constants.expoConfig?.extra?.SERVER; // Change to your backend URL
 
@@ -22,6 +22,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const socketRef = useRef<Socket | null>(null);
+  let interval: NodeJS.Timeout | undefined;
 
   useEffect(() => {
     socketRef.current = socket;
@@ -33,9 +34,36 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket?.on(SocketEvents.NEW_PIC_MESSAGE, (data: any) =>
       eventBus.emit(SocketEvents.NEW_PIC_MESSAGE, data)
     );
+    socket?.on(SocketEvents.NEW_EVENT_INCOMING, async (data: any) => {
+      if (data.places?.length > 0) {
+        const sendData = {
+          places: data.places[0],
+        };
+        await Storage.set("current_event", sendData);
+        eventBus.emit(SocketEvents.NEW_EVENT_INCOMING, sendData);
+      } else {
+        const exists = await Storage.has("current_event");
+        if (exists) {
+          Storage.remove("current_event");
+        }
+      }
+    });
+
+    // We check if there is any event that we're hosting coming out
+    (async () => {
+      const user = await Storage.get("user");
+      if (user?.user?.id) {
+        interval = setInterval(() => {
+          socket.emit(SocketEvents.NEW_EVENT_INCOMING, {
+            user_id: user?.user?.id,
+          });
+        }, 30000);
+      }
+    })();
 
     return () => {
       socket.disconnect();
+      if (interval) clearInterval(interval);
     };
   }, []);
 

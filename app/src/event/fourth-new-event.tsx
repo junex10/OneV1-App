@@ -61,7 +61,7 @@ const FourthNewEvent: React.FC = () => {
 
     try {
       const data = await Events.setEvent(formData);
-      await Storage.set("new_event_created", data);
+      await Storage.set("current_event", data);
       router.replace("/src/map/map");
     } catch (e) {
       Alert.alert("An error has ocurred");
