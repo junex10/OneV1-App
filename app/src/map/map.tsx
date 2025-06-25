@@ -208,6 +208,9 @@ const Map: React.FC = () => {
         } else {
           await Storage.remove("current_event");
         }
+      } else {
+        setNewEventCreated(false);
+        setCurrentEvent(null);
       }
     });
 

@@ -35,6 +35,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       eventBus.emit(SocketEvents.NEW_PIC_MESSAGE, data)
     );
     socket?.on(SocketEvents.NEW_EVENT_INCOMING, async (data: any) => {
+      console.log(data, " HERE ");
       if (data.places?.length > 0) {
         const sendData = {
           places: data.places[0],
@@ -46,6 +47,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
         if (exists) {
           Storage.remove("current_event");
         }
+        eventBus.emit(SocketEvents.NEW_EVENT_INCOMING, null);
       }
     });
 
