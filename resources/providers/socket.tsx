@@ -34,19 +34,16 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket?.on(SocketEvents.NEW_PIC_MESSAGE, (data: any) =>
       eventBus.emit(SocketEvents.NEW_PIC_MESSAGE, data)
     );
-    socket?.on(SocketEvents.NEW_EVENT_INCOMING, async (data: any) => {
+    socket?.on(SocketEvents.EVENTS.NEW_EVENT_INCOMING, async (data: any) => {
       if (data.places?.length > 0) {
         const sendData = {
           places: data.places[0],
         };
         await Storage.set("current_event", sendData);
-        eventBus.emit(SocketEvents.NEW_EVENT_INCOMING, sendData);
+        eventBus.emit(SocketEvents.EVENTS.NEW_EVENT_INCOMING, sendData);
       } else {
-        const exists = await Storage.has("current_event");
-        if (exists) {
-          Storage.remove("current_event");
-        }
-        eventBus.emit(SocketEvents.NEW_EVENT_INCOMING, null);
+        Storage.remove("current_event");
+        eventBus.emit(SocketEvents.EVENTS.NEW_EVENT_INCOMING, null);
       }
     });
 
@@ -55,10 +52,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       const user = await Storage.get("user");
       if (user?.user?.id) {
         interval = setInterval(() => {
-          socket.emit(SocketEvents.NEW_EVENT_INCOMING, {
+          socket.emit(SocketEvents.EVENTS.NEW_EVENT_INCOMING, {
             user_id: user?.user?.id,
           });
-        }, 30000);
+        }, 3000);
       }
     })();
 

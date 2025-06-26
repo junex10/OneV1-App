@@ -25,6 +25,7 @@ import {
   eventBus,
   SocketEvents,
 } from "./../../../resources/utils/global";
+import { socket } from "../../../resources/providers/socket";
 import Constants from "expo-constants";
 
 const { width, height } = Dimensions.get("window");
@@ -200,19 +201,22 @@ const Map: React.FC = () => {
 
   useEffect(() => {
     // In case we are in maps and the event just pop up to started, we change it
-    eventBus.on(SocketEvents.NEW_EVENT_INCOMING, async (incomingEvent) => {
-      if (incomingEvent) {
-        if (isEventActive(incomingEvent?.places)) {
-          setCurrentEvent(incomingEvent?.places);
-          setNewEventCreated(true); // We are the host, we dont apply the left event thing
+    eventBus.on(
+      SocketEvents.EVENTS.NEW_EVENT_INCOMING,
+      async (incomingEvent) => {
+        if (incomingEvent) {
+          if (isEventActive(incomingEvent?.places)) {
+            setCurrentEvent(incomingEvent?.places);
+            setNewEventCreated(true); // We are the host, we dont apply the left event thing
+          } else {
+            await Storage.remove("current_event");
+          }
         } else {
-          await Storage.remove("current_event");
+          setNewEventCreated(false);
+          setCurrentEvent(null);
         }
-      } else {
-        setNewEventCreated(false);
-        setCurrentEvent(null);
       }
-    });
+    );
 
     (async () => {
       const newEvent = await Storage.get("current_event");
@@ -264,6 +268,13 @@ const Map: React.FC = () => {
         Number(currentPlace?.longitude)
       ) <= meterThreshold // 10 meters threshold
     ) {
+      //IF we joined, we must register the user on event users in db, we send a socket
+
+      socket?.emit(SocketEvents.EVENTS.USER_JOINING, {
+        user_id: user?.user.id,
+        event_id: currentPlace?.id,
+      });
+
       // We have to reset the values once the user arrives
       setCurrentEvent(currentPlace); // -> We store the current event for future references
       setHasArrived(true);
@@ -294,6 +305,13 @@ const Map: React.FC = () => {
     ) {
       // We verify first if we create a new event, to avoid any error
       if (!newEventCreated) {
+        //IF we left, we must delete the user on event users left in db, we send a socket
+
+        socket?.emit(SocketEvents.EVENTS.USER_LEFT, {
+          user_id: user?.user.id,
+          event_id: currentEvent?.id,
+        });
+
         const removingEvents = events.filter(
           (item: any) => item?.id == currentPlace?.id
         );
