@@ -33,7 +33,6 @@ const FourthNewEvent: React.FC = () => {
   const [form, setForm] = useState<any>();
   const [eventType, setEventType] = useState<any>();
   const [user, setUser] = useState<any>(null);
-  const [showCreatedEvent, setShowcreatedEvent] = useState(false);
 
   useEffect(() => {
     const eventForm = event ? JSON.parse(event as string) : null;

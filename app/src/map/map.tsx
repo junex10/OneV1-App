@@ -714,7 +714,14 @@ const Map: React.FC = () => {
                 isEventActive(currentEvent) && ( // -> Current event joined
                   <TouchableOpacity
                     style={styles.fabNavItem}
-                    onPress={() => {}}
+                    onPress={() => {
+                      router.push({
+                        pathname: "src/event/current-event",
+                        params: {
+                          current_event: JSON.stringify(currentEvent),
+                        },
+                      });
+                    }}
                   >
                     <Ionicons
                       name="diamond-outline"
