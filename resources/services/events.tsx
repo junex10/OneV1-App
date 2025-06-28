@@ -21,6 +21,10 @@ interface SetEventDTO {
   expiration_time?: Date;
   starting_event?: Date;
 }
+interface GetAllMyEvents {
+  user_id: number;
+}
+
 const Events = {
   getEvents: async (coordinates: Coordinates) => {
     try {
@@ -78,6 +82,18 @@ const Events = {
       const response = await api.post(`${API}app/events/getEventsTypeById`, {
         event_type_id,
       });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
+  getAllMyEvents: async (request: GetAllMyEvents) => {
+    try {
+      const response = await api.post(
+        `${API}app/events/getAllMyEvents`,
+        request
+      );
       return response.data;
     } catch (error) {
       console.error("Error fetching places:", error);

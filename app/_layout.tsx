@@ -107,6 +107,10 @@ export default function RootLayout() {
           name={`${EVENT}current-event-chat`}
           options={{ title: "Current event chat", headerShown: false }}
         />
+        <Stack.Screen
+          name={`${EVENT}current-event-list`}
+          options={{ title: "Current event chat", headerShown: false }}
+        />
       </Stack>
     </Providers>
   );
