@@ -57,16 +57,24 @@ const Chat: React.FC = () => {
       setMessages(logs?.chats?.logs);
     })();
 
-    eventBus.on(SocketEvents.NEW_MESSAGE, (data) => {
-      setMessages(data?.logs);
-    });
-    eventBus.on(SocketEvents.NEW_PIC_MESSAGE, (data) => {
-      setMessages(data?.logs);
-    });
+    const handleNewMessage = async (data: any) => {
+      const getUser = await Storage.get("user");
+      if (
+        (getUser?.user?.id === data?.sender_id &&
+          friendData?.id === data?.other_user_id) ||
+        (getUser?.user?.id === data?.other_user_id &&
+          friendData?.id === data?.sender_id)
+      ) {
+        setMessages(data?.logs);
+      }
+    };
+
+    eventBus.on(SocketEvents.NEW_MESSAGE, handleNewMessage);
+    eventBus.on(SocketEvents.NEW_PIC_MESSAGE, handleNewMessage);
 
     return () => {
-      eventBus.off(SocketEvents.NEW_MESSAGE);
-      eventBus.off(SocketEvents.NEW_PIC_MESSAGE);
+      eventBus.off(SocketEvents.NEW_MESSAGE, handleNewMessage);
+      eventBus.off(SocketEvents.NEW_PIC_MESSAGE, handleNewMessage);
     };
   }, []);
 
