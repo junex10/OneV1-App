@@ -121,7 +121,7 @@ const CurrentEventList: React.FC = () => {
               router.push({
                 pathname: "/src/event/current-event",
                 params: {
-                  event: JSON.stringify(item),
+                  event_id: JSON.stringify(item.id),
                 },
               });
             }}
@@ -194,11 +194,33 @@ const CurrentEventList: React.FC = () => {
         )}
         contentContainerStyle={{ padding: 18 }}
       />
+      <TouchableOpacity
+        style={styles.comeBackBtn}
+        onPress={() => router.back()}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="arrow-back" size={26} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  comeBackBtn: {
+    position: "absolute",
+    left: 24,
+    bottom: 32,
+    backgroundColor: Colors.purple,
+    borderRadius: 24,
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.blue_dark_2,

@@ -13,8 +13,11 @@ import { Colors } from "../../../resources/utils/global";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Storage } from "../../../resources/utils";
 import { Ionicons } from "@expo/vector-icons";
+import { Events } from "../../../resources/services";
+import Constants from "expo-constants";
 
 const { width } = Dimensions.get("window");
+const server = Constants.expoConfig?.extra?.SERVER;
 
 // Dummy data
 const stories = [
@@ -99,21 +102,27 @@ const mainEventPic =
 
 const CurrentEvent: React.FC = () => {
   const router = useRouter();
-  const { current_event } = useLocalSearchParams();
+  const { event_id } = useLocalSearchParams();
 
   const [user, setUser] = useState<any>(null);
   const [currentEvent, setCurrentEvent] = useState<any>(null);
+  const [viewers, setViewers] = useState<any>(null);
 
   useEffect(() => {
-    const settingEvent = current_event
-      ? JSON.parse(current_event as string)
-      : null;
-    setCurrentEvent(settingEvent);
-    console.log(settingEvent, " HERE ");
+    const event = event_id ? JSON.parse(event_id as string) : null;
 
     (async () => {
       const getUser = await Storage.get("user");
       setUser(getUser);
+
+      const eventData = await Events.getEvent({ event_id: event });
+      setCurrentEvent(eventData?.place);
+
+      const viewersData = await Events.getViewers({
+        event_id: event,
+        user_id: getUser.user.id,
+      });
+      setViewers(viewersData.viewers);
     })();
   }, []);
 
@@ -165,7 +174,7 @@ const CurrentEvent: React.FC = () => {
         </TouchableOpacity>
       </View>
       <FlatList
-        data={stories}
+        data={viewers}
         horizontal
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
@@ -174,7 +183,11 @@ const CurrentEvent: React.FC = () => {
           <View style={styles.storyItem}>
             <View style={styles.storyAvatarBorder}>
               <Image
-                source={{ uri: item.profile_pic }}
+                source={{
+                  uri: item?.user?.photo
+                    ? `${server}storage/${item?.user?.photo}`
+                    : `${server}img/random_location.jpg`,
+                }}
                 style={styles.storyAvatar}
               />
             </View>

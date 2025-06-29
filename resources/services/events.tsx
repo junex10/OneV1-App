@@ -25,6 +25,11 @@ interface GetAllMyEvents {
   user_id: number;
 }
 
+interface GetViewers {
+  event_id: number;
+  user_id?: number;
+}
+
 const Events = {
   getEvents: async (coordinates: Coordinates) => {
     try {
@@ -94,6 +99,15 @@ const Events = {
         `${API}app/events/getAllMyEvents`,
         request
       );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
+  getViewers: async (request: GetViewers) => {
+    try {
+      const response = await api.post(`${API}app/events/getViewers`, request);
       return response.data;
     } catch (error) {
       console.error("Error fetching places:", error);
