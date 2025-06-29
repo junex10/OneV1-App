@@ -9,18 +9,27 @@ import {
   TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../../resources/utils/global";
+import {
+  Colors,
+  SocketEvents,
+  eventBus,
+} from "../../../resources/utils/global";
 import { Storage } from "../../../resources/utils";
 import { Events } from "../../../resources/services";
+import { socket } from "../../../resources/providers/socket";
 import Constants from "expo-constants";
 import moment from "moment";
+import { useRouter } from "expo-router";
 
 const server = Constants.expoConfig?.extra?.SERVER;
 
 const CurrentEventList: React.FC = () => {
+  const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [events, setEvents] = useState<any>([]);
   const [user, setUser] = useState<any>(null);
+  const [filteredEvents, setFilteredEvents] = useState<any>([]);
 
   useEffect(() => {
     (async () => {
@@ -29,8 +38,60 @@ const CurrentEventList: React.FC = () => {
 
       const data = await Events.getAllMyEvents({ user_id: getUser.user.id });
       setEvents(data.events);
+      setFilteredEvents(data.events);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!search.trim()) {
+      setFilteredEvents(events);
+      return;
+    }
+    const lower = search.toLowerCase();
+    setFilteredEvents(
+      events.filter(
+        (item: any) =>
+          item.title?.toLowerCase().includes(lower) ||
+          item.content?.toLowerCase().includes(lower) ||
+          item.address?.toLowerCase().includes(lower)
+      )
+    );
+  }, [search, events]);
+
+  useEffect(() => {
+    eventBus.on(SocketEvents.EVENTS.USER_JOINING, (data) => {
+      setEvents((prevEvents: any[]) =>
+        prevEvents.map((event) =>
+          event.id === data.data.event_id ? { ...event, joined: true } : event
+        )
+      );
+    });
+    eventBus.on(SocketEvents.EVENTS.USER_LEFT, (data) => {
+      setEvents((prevEvents: any[]) =>
+        prevEvents.map((event) =>
+          event.id === data.data.event_id ? { ...event, joined: false } : event
+        )
+      );
+    });
+    return () => {
+      eventBus.off(SocketEvents.EVENTS.USER_JOINING);
+      eventBus.off(SocketEvents.EVENTS.USER_LEFT);
+    };
+  }, []);
+
+  const joinEvent = (event_id: number) => {
+    socket?.emit(SocketEvents.EVENTS.USER_JOINING, {
+      user_id: user?.user.id,
+      event_id,
+    });
+  };
+
+  const leftEvent = (event_id: number) => {
+    socket?.emit(SocketEvents.EVENTS.USER_LEFT, {
+      user_id: user?.user.id,
+      event_id,
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -51,10 +112,20 @@ const CurrentEventList: React.FC = () => {
         />
       </View>
       <FlatList
-        data={events}
+        data={filteredEvents}
         keyExtractor={(item) => item.id}
         renderItem={({ item }: any) => (
-          <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => {
+              router.push({
+                pathname: "/src/event/current-event",
+                params: {
+                  event: JSON.stringify(item),
+                },
+              });
+            }}
+          >
             <View style={styles.headerRow}>
               <Text style={styles.title}>{item.title}</Text>
               <Image
@@ -74,7 +145,7 @@ const CurrentEventList: React.FC = () => {
                 color={Colors.gray}
                 style={{ marginRight: 4 }}
               />
-              <Text style={styles.location}>{item.location}</Text>
+              <Text style={styles.location}>{item.address}</Text>
             </View>
             <View style={styles.dateTimeRow}>
               <Ionicons
@@ -104,23 +175,22 @@ const CurrentEventList: React.FC = () => {
             </View>
             <View style={styles.actionsRow}>
               {!item.joined ? (
-                <>
-                  <TouchableOpacity style={styles.joinBtn}>
-                    <Text style={styles.joinText}>+ Join</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.notInterestedBtn}>
-                    <Text style={styles.notInterestedText}>
-                      — Not Interested
-                    </Text>
-                  </TouchableOpacity>
-                </>
+                <TouchableOpacity
+                  style={styles.joinBtn}
+                  onPress={() => joinEvent(item.id)}
+                >
+                  <Text style={styles.joinText}>+ Join</Text>
+                </TouchableOpacity>
               ) : (
-                <View style={styles.joinedBtn}>
+                <TouchableOpacity
+                  style={styles.joinedBtn}
+                  onPress={() => leftEvent(item.id)}
+                >
                   <Text style={styles.joinedText}>+ Joined</Text>
-                </View>
+                </TouchableOpacity>
               )}
             </View>
-          </View>
+          </TouchableOpacity>
         )}
         contentContainerStyle={{ padding: 18 }}
       />

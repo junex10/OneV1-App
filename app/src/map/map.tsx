@@ -16,13 +16,12 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
-import { GoogleMaps, Events } from "./../../../resources/services";
+import { Events } from "./../../../resources/services";
 import { CustomModal, Storage } from "../../../resources/utils";
 import { useLocation } from "../../../resources/providers/location";
 import {
   mapCustomStyle,
   Colors,
-  eventBus,
   SocketEvents,
 } from "./../../../resources/utils/global";
 import { socket } from "../../../resources/providers/socket";
@@ -55,7 +54,6 @@ const Map: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [seekingEvent, setSeekingEvent] = useState<boolean>(false); // -> will indicate whenever the user is in process of seek an event and hide tab bar
   const [zoom, setZoom] = useState(defaultZoom);
-  const [leftEvent, setLeftEvent] = useState(false); // -> will show a modal whenever you left an current event
   const [eventCreated, setEventCreated] = useState(false); // -> will show a modal when you create an event
   const [showSearchTab, setShowSearchTab] = useState(false);
   const [eventsList, setEventsList] = useState([]); // -> will contain a list of events to show when you're searching in the search bar
@@ -176,6 +174,7 @@ const Map: React.FC = () => {
 
   const logout = () => {
     Storage.remove("user");
+    Storage.remove("current_event");
     router.replace("/");
   };
 
@@ -189,47 +188,6 @@ const Map: React.FC = () => {
     });
     setEventsList(data?.places);
   };
-
-  // We are checking if the current event that we created or in general is active
-  const isEventActive = (event: any) => {
-    if (!event?.starting_event || !event?.expiration_time) return false;
-    const now = new Date();
-    const start = new Date(event.starting_event);
-    const end = new Date(event.expiration_time);
-    return now >= start && now <= end;
-  };
-
-  useEffect(() => {
-    // In case we are in maps and the event just pop up to started, we change it
-    eventBus.on(
-      SocketEvents.EVENTS.NEW_EVENT_INCOMING,
-      async (incomingEvent) => {
-        if (incomingEvent) {
-          if (isEventActive(incomingEvent?.places)) {
-            setCurrentEvent(incomingEvent?.places);
-            setNewEventCreated(true); // We are the host, we dont apply the left event thing
-          } else {
-            await Storage.remove("current_event");
-          }
-        } else {
-          setNewEventCreated(false);
-          setCurrentEvent(null);
-        }
-      }
-    );
-
-    (async () => {
-      const newEvent = await Storage.get("current_event");
-      if (newEvent) {
-        if (isEventActive(newEvent?.places)) {
-          setCurrentEvent(newEvent?.places);
-          setNewEventCreated(true); // We are the host, we dont apply the left event thing
-        } else {
-          await Storage.remove("current_event");
-        }
-      }
-    })();
-  }, []);
 
   useEffect(() => {
     let subscription: Location.LocationSubscription;
@@ -248,7 +206,7 @@ const Map: React.FC = () => {
     // We verify if we have logged in
 
     (async () => {
-      const getUser = await Storage.get("user"); // -> We may update this later
+      const getUser = await Storage.get("user");
       setUser(getUser);
     })();
 
@@ -318,7 +276,6 @@ const Map: React.FC = () => {
         setEvents(removingEvents); // -> We remove every other marker but the one selected
 
         setCurrentEvent(null); // -> Will set off the currentEvent because you just walk away from it
-        setLeftEvent(true); // -> will show up whenever my left an current event
       }
     }
   }, [getLocation?.coords, hasArrived, currentEvent]);
@@ -349,16 +306,6 @@ const Map: React.FC = () => {
         title="You have arrived!"
         message="Welcome to your destination."
         onClose={() => setShowArrivedModal(false)}
-        timeout={4000}
-      />
-
-      {/**  Modal that pop up whenever you left an event */}
-
-      <CustomModal
-        visible={leftEvent}
-        title="Left event!"
-        message="You have left the event."
-        onClose={() => setLeftEvent(false)}
         timeout={4000}
       />
 
@@ -718,36 +665,25 @@ const Map: React.FC = () => {
           <TouchableOpacity style={styles.fabNavItem} onPress={placesNearby}>
             <Ionicons name="location-outline" size={28} color={Colors.purple} />
           </TouchableOpacity>
-          {user && (!currentEvent || !isEventActive(currentEvent)) ? ( // We must verify that there isnt any event on going, if there is any, we hide the button
-            // -> Add new event, show button where you arent in a current event, you need to log in first
-            <TouchableOpacity
-              style={styles.fabNavCenter}
-              onPress={() => router.push("src/event/first-new-event")}
-            >
-              <Ionicons name="add-outline" size={32} color="#fff" />
-            </TouchableOpacity>
-          ) : (
+          {user && ( // We must verify that there isnt any event on going, if there is any, we hide the button
             <>
-              {currentEvent &&
-                isEventActive(currentEvent) && ( // -> Current event joined
-                  <TouchableOpacity
-                    style={styles.fabNavItem}
-                    onPress={() => {
-                      router.push({
-                        pathname: "src/event/current-event",
-                        params: {
-                          current_event: JSON.stringify(currentEvent),
-                        },
-                      });
-                    }}
-                  >
-                    <Ionicons
-                      name="diamond-outline"
-                      size={28}
-                      color={Colors.purple}
-                    />
-                  </TouchableOpacity>
-                )}
+              {/** -> Add new event, show button where you arent in a current event, you need to log in first */}
+              <TouchableOpacity
+                style={styles.fabNavItem}
+                onPress={() => router.push("src/event/first-new-event")}
+              >
+                <Ionicons name="add-outline" size={28} color={Colors.purple} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.fabNavItem}
+                onPress={() => router.push("src/event/current-event-list")}
+              >
+                <Ionicons
+                  name="diamond-outline"
+                  size={28}
+                  color={Colors.purple}
+                />
+              </TouchableOpacity>
             </>
           )}
           {!user ? (

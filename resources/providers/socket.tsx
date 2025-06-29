@@ -36,16 +36,19 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     );
     socket?.on(SocketEvents.EVENTS.NEW_EVENT_INCOMING, async (data: any) => {
       if (data.places?.length > 0) {
-        const sendData = {
-          places: data.places[0],
-        };
-        await Storage.set("current_event", sendData);
-        eventBus.emit(SocketEvents.EVENTS.NEW_EVENT_INCOMING, sendData);
+        await Storage.set("current_event", data.places);
+        eventBus.emit(SocketEvents.EVENTS.NEW_EVENT_INCOMING, data.places);
       } else {
         Storage.remove("current_event");
         eventBus.emit(SocketEvents.EVENTS.NEW_EVENT_INCOMING, null);
       }
     });
+    socket?.on(SocketEvents.EVENTS.USER_JOINING, (data: any) =>
+      eventBus.emit(SocketEvents.EVENTS.USER_JOINING, data)
+    );
+    socket?.on(SocketEvents.EVENTS.USER_LEFT, (data: any) =>
+      eventBus.emit(SocketEvents.EVENTS.USER_LEFT, data)
+    );
 
     // We check if there is any event that we're hosting coming out
     (async () => {
