@@ -29,6 +29,11 @@ interface GetViewers {
   event_id: number;
   user_id?: number;
 }
+interface GetCommentsDTO {
+  event_id: number;
+  count_comments?: boolean;
+  last_comment?: boolean;
+}
 
 const Events = {
   getEvents: async (coordinates: Coordinates) => {
@@ -108,6 +113,15 @@ const Events = {
   getViewers: async (request: GetViewers) => {
     try {
       const response = await api.post(`${API}app/events/getViewers`, request);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
+  getComments: async (request: GetCommentsDTO) => {
+    try {
+      const response = await api.post(`${API}app/events/getComments`, request);
       return response.data;
     } catch (error) {
       console.error("Error fetching places:", error);

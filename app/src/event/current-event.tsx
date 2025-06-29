@@ -15,38 +15,11 @@ import { Storage } from "../../../resources/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { Events } from "../../../resources/services";
 import Constants from "expo-constants";
+import { Modal } from "react-native";
+import moment from "moment";
 
 const { width } = Dimensions.get("window");
 const server = Constants.expoConfig?.extra?.SERVER;
-
-// Dummy data
-const stories = [
-  {
-    id: "1",
-    name: "Thomas",
-    profile_pic: "https://randomuser.me/api/portraits/men/32.jpg",
-  },
-  {
-    id: "2",
-    name: "Mike",
-    profile_pic: "https://randomuser.me/api/portraits/men/45.jpg",
-  },
-  {
-    id: "3",
-    name: "Kevin",
-    profile_pic: "https://randomuser.me/api/portraits/men/12.jpg",
-  },
-  {
-    id: "4",
-    name: "Victor",
-    profile_pic: "https://randomuser.me/api/portraits/men/76.jpg",
-  },
-  {
-    id: "5",
-    name: "Mildred",
-    profile_pic: "https://randomuser.me/api/portraits/men/85.jpg",
-  },
-];
 
 const feed = {
   user: {
@@ -73,30 +46,6 @@ const feed = {
   ],
 };
 
-const events = [
-  {
-    id: "1",
-    title: "Live on radio",
-    image:
-      "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80",
-    location: "1000 J Freedom Trail",
-  },
-  {
-    id: "2",
-    title: "Music Event",
-    image:
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
-    location: "1000 J Front Summer",
-  },
-  {
-    id: "3",
-    title: "Happy Night",
-    image:
-      "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
-    location: "500 Vampt St",
-  },
-];
-
 const mainEventPic =
   "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=800&q=80";
 
@@ -107,6 +56,9 @@ const CurrentEvent: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [currentEvent, setCurrentEvent] = useState<any>(null);
   const [viewers, setViewers] = useState<any>(null);
+  const [viewAllVisible, setViewAllVisible] = useState(false);
+  const [countComments, setCountComments] = useState<number>(0);
+  const [lastComment, setLastComment] = useState<any>();
 
   useEffect(() => {
     const event = event_id ? JSON.parse(event_id as string) : null;
@@ -123,6 +75,18 @@ const CurrentEvent: React.FC = () => {
         user_id: getUser.user.id,
       });
       setViewers(viewersData.viewers);
+
+      const commentData = await Events.getComments({
+        event_id: event,
+        count_comments: true, // We will bring the comments, only the count
+      });
+      setCountComments(commentData?.comments);
+
+      const lastC = await Events.getComments({
+        event_id: event,
+        last_comment: true,
+      });
+      setLastComment(lastC.comments);
     })();
   }, []);
 
@@ -135,7 +99,9 @@ const CurrentEvent: React.FC = () => {
         <View style={styles.mainEventImageOverlay} />
         {/* Title centered over the image */}
         <View style={styles.mainEventTitleContainer}>
-          <Text style={styles.mainEventTitle}>Party</Text>
+          <Text style={styles.mainEventTitle} numberOfLines={1}>
+            {currentEvent?.title}
+          </Text>
         </View>
         {/* Stats row in the bottom right corner */}
         <View style={styles.mainEventStatsBottomRight}>
@@ -146,7 +112,7 @@ const CurrentEvent: React.FC = () => {
               color="#fff"
               style={{ marginRight: 4 }}
             />
-            <Text style={styles.statText}>1,158</Text>
+            <Text style={styles.statText}>{viewers ? viewers.length : 0}</Text>
           </View>
           <View style={styles.statItemWithBg}>
             <Ionicons
@@ -155,7 +121,7 @@ const CurrentEvent: React.FC = () => {
               color="#fff"
               style={{ marginRight: 4 }}
             />
-            <Text style={styles.statText}>500</Text>
+            <Text style={styles.statText}>{countComments}</Text>
           </View>
         </View>
         <TouchableOpacity
@@ -169,7 +135,7 @@ const CurrentEvent: React.FC = () => {
       {/* Stories */}
       <View style={styles.storiesHeaderRow}>
         <Text style={styles.storiesTitle}>Viewers</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => setViewAllVisible(true)}>
           <Text style={styles.viewAll}>View All</Text>
         </TouchableOpacity>
       </View>
@@ -198,6 +164,45 @@ const CurrentEvent: React.FC = () => {
         )}
       />
 
+      {/* View All Modal */}
+      <Modal
+        visible={viewAllVisible}
+        animationType="slide"
+        onRequestClose={() => setViewAllVisible(false)}
+        transparent={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                Joined Users ({viewers ? viewers.length : 0})
+              </Text>
+              <TouchableOpacity onPress={() => setViewAllVisible(false)}>
+                <Ionicons name="close" size={28} color={Colors.purple} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={viewers}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.modalUserRow}>
+                  <Image
+                    source={{
+                      uri: item?.user?.photo
+                        ? `${server}storage/${item?.user?.photo}`
+                        : `${server}img/random_location.jpg`,
+                    }}
+                    style={styles.storyAvatar}
+                  />
+                  <Text style={styles.modalUserName}>{item.name}</Text>
+                </View>
+              )}
+              contentContainerStyle={{ paddingBottom: 24 }}
+            />
+          </View>
+        </View>
+      </Modal>
+
       {/* Feed Card */}
       <TouchableOpacity
         onPress={() =>
@@ -216,25 +221,17 @@ const CurrentEvent: React.FC = () => {
               style={styles.feedAvatar}
             />
             <View style={{ marginLeft: 10 }}>
-              <Text style={styles.feedUser}>{feed.user.name}</Text>
-              <Text style={styles.feedTime}>{feed.time}</Text>
+              <Text style={styles.feedUser}>
+                {lastComment?.user?.person?.username}
+              </Text>
+              <Text style={styles.feedTime}>
+                {lastComment?.created_at
+                  ? moment(lastComment.created_at).fromNow()
+                  : ""}
+              </Text>
             </View>
           </View>
-          <Text style={styles.feedText}>{feed.text}</Text>
-          <View style={styles.feedStatsRow}>
-            <View style={styles.feedJoinedRow}>
-              {feed.joined.map((u, idx) => (
-                <Image
-                  key={u.id}
-                  source={{ uri: u.profile_pic }}
-                  style={[
-                    styles.feedJoinedAvatar,
-                    idx !== 0 && { marginLeft: -12 },
-                  ]}
-                />
-              ))}
-            </View>
-          </View>
+          <Text style={styles.feedText}>{lastComment?.comment}</Text>
         </View>
       </TouchableOpacity>
     </ScrollView>
@@ -269,7 +266,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   storiesTitle: {
-    color: "#fff",
+    color: Colors.purple,
     fontWeight: "bold",
     fontSize: 18,
   },
@@ -333,16 +330,6 @@ const styles = StyleSheet.create({
     marginTop: 14,
     marginBottom: 18,
   },
-  feedStatsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-  },
-  feedJoinedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: "auto",
-  },
   feedJoinedAvatar: {
     width: 28,
     height: 28,
@@ -375,7 +362,7 @@ const styles = StyleSheet.create({
   mainEventTitle: {
     color: Colors.purple,
     fontWeight: "bold",
-    fontSize: 28,
+    fontSize: 26,
     paddingHorizontal: 24,
     paddingVertical: 8,
     borderRadius: 18,
@@ -443,6 +430,39 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: Colors.purple,
     zIndex: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: Colors.blue_dark,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    color: Colors.purple,
+    fontWeight: "bold",
+    fontSize: 20,
+  },
+  modalUserRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalUserName: {
+    color: "#fff",
+    fontSize: 16,
+    marginLeft: 14,
   },
 });
 
