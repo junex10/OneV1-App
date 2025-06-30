@@ -49,6 +49,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket?.on(SocketEvents.EVENTS.USER_LEFT, (data: any) =>
       eventBus.emit(SocketEvents.EVENTS.USER_LEFT, data)
     );
+    socket?.on(SocketEvents.EVENTS.NEW_COMMENT, (data: any) =>
+      eventBus.emit(SocketEvents.EVENTS.NEW_COMMENT, data)
+    );
 
     // We check if there is any event that we're hosting coming out
     (async () => {
@@ -58,7 +61,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
           socket.emit(SocketEvents.EVENTS.NEW_EVENT_INCOMING, {
             user_id: user?.user?.id,
           });
-        }, 3000);
+        }, 30000);
       }
     })();
 

@@ -10,43 +10,20 @@ import {
   TextInput,
   Dimensions,
 } from "react-native";
-import { Colors } from "../../../resources/utils/global";
+import { Colors, SocketEvents } from "../../../resources/utils/global";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Storage } from "../../../resources/utils";
+import { Storage, eventBus } from "../../../resources/utils";
+import Constants from "expo-constants";
+import { Events } from "../../../resources/services";
+import { socket } from "../../../resources/providers/socket";
+import moment from "moment";
 
 const { width, height } = Dimensions.get("window");
+const server = Constants.expoConfig?.extra?.SERVER;
 
 const bgImage =
   "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80";
-
-const comments = [
-  {
-    id: "1",
-    user: {
-      name: "Jenny Walton",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    },
-    text: "Awesome Love it ! ❤️",
-  },
-  {
-    id: "2",
-    user: {
-      name: "Stila Mathew",
-      avatar: "https://randomuser.me/api/portraits/women/55.jpg",
-    },
-    text: "Awesome !",
-  },
-  {
-    id: "my-comment",
-    user: {
-      name: "You",
-      avatar: "https://randomuser.me/api/portraits/men/99.jpg",
-    },
-    text: "This is how my comment looks!",
-    mine: true,
-  },
-];
 
 const eventUser = {
   name: "Hollan Martino",
@@ -60,6 +37,8 @@ const CurrentEventChat: React.FC = () => {
   const [elapsed, setElapsed] = useState("00:00:00");
   const [user, setUser] = useState<any>(null);
   const [currentEvent, setCurrentEvent] = useState<any>(null);
+  const [comments, setComments] = useState<any>();
+  const [input, setInput] = useState("");
 
   useEffect(() => {
     // Fake timer for UI
@@ -72,6 +51,49 @@ const CurrentEventChat: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const eventForm = current_event
+      ? JSON.parse(current_event as string)
+      : null;
+    setCurrentEvent(eventForm);
+
+    (async () => {
+      const getUser = await Storage.get("user");
+      setUser(getUser);
+
+      const getComments = await Events.getComments({ event_id: eventForm?.id });
+      setComments(getComments?.comments);
+    })();
+  }, []);
+
+  useEffect(() => {
+    eventBus.on(SocketEvents.EVENTS.NEW_COMMENT, (receiver: any) => {
+      console.log(receiver, " HERE BB ");
+    });
+    return () => {
+      eventBus.off(SocketEvents.EVENTS.NEW_COMMENT);
+    };
+  }, []);
+
+  // Calculate elapsed time based on starting_event
+  useEffect(() => {
+    if (!currentEvent?.starting_event) return;
+
+    const updateElapsed = () => {
+      const start = moment(currentEvent.starting_event);
+      const now = moment();
+      const duration = moment.duration(now.diff(start));
+      const h = String(Math.floor(duration.asHours())).padStart(2, "0");
+      const m = String(duration.minutes()).padStart(2, "0");
+      const s = String(duration.seconds()).padStart(2, "0");
+      setElapsed(`${h}:${m}:${s}`);
+    };
+
+    updateElapsed();
+    const interval = setInterval(updateElapsed, 1000);
+    return () => clearInterval(interval);
+  }, [currentEvent?.starting_event]);
+
   const formatTime = (totalSeconds: number) => {
     const h = Math.floor(totalSeconds / 3600)
       .toString()
@@ -83,24 +105,31 @@ const CurrentEventChat: React.FC = () => {
     return `${h}:${m}:${s}`;
   };
 
-  useEffect(() => {
-    const eventForm = current_event
-      ? JSON.parse(current_event as string)
-      : null;
-    setCurrentEvent(eventForm);
-    (async () => {
-      const getUser = await Storage.get("user");
-      setUser(getUser);
-    })();
-  }, []);
+  const handleSend = () => {
+    if (!input.trim()) return;
+    socket?.emit(SocketEvents.EVENTS.NEW_COMMENT, {
+      event_id: currentEvent?.id,
+      user_id: user?.user?.id,
+      comment: input,
+    });
+  };
 
   return (
     <ImageBackground source={{ uri: bgImage }} style={styles.bg}>
       {/* Top Bar with avatar, name, timer, close */}
       <View style={styles.topBarFull}>
-        <Image source={{ uri: eventUser.avatar }} style={styles.avatar} />
+        <Image
+          source={{
+            uri: currentEvent?.user?.photo
+              ? `${server}storage/${currentEvent?.user?.photo}`
+              : `${server}img/random_location.jpg`,
+          }}
+          style={styles.avatar}
+        />
         <View style={styles.topBarTextContainer}>
-          <Text style={styles.userName}>{eventUser.name}</Text>
+          <Text style={styles.userName}>
+            {currentEvent?.user?.person?.username}
+          </Text>
           <Text style={styles.time}>{elapsed}</Text>
         </View>
         <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
@@ -119,59 +148,51 @@ const CurrentEventChat: React.FC = () => {
         keyExtractor={(item) => item.id}
         style={styles.commentsList}
         contentContainerStyle={{ paddingBottom: 60 }}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.commentRow,
-              item.mine && { flexDirection: "row-reverse" },
-            ]}
-          >
-            <Image
-              source={{ uri: item.user.avatar }}
-              style={[
-                styles.commentAvatar,
-                item.mine && {
-                  borderColor: Colors.purple,
-                  marginLeft: 10,
-                  marginRight: 0,
-                },
-              ]}
-            />
+        renderItem={({ item }) => {
+          const isMine = item.user?.id === user?.user?.id;
+          return (
             <View
               style={[
-                styles.commentBubble,
-                item.mine && {
-                  backgroundColor: Colors.purple,
-                  opacity: 0.85,
-                  alignItems: "flex-end",
-                },
+                styles.commentRow,
+                isMine && { flexDirection: "row-reverse" },
               ]}
             >
-              <Text
-                style={[styles.commentUser, item.mine && { color: "#fff" }]}
+              <Image
+                source={{
+                  uri: item?.user?.photo
+                    ? `${server}storage/${item?.user?.photo}`
+                    : `${server}img/random_location.jpg`,
+                }}
+                style={[
+                  styles.commentAvatar,
+                  isMine && {
+                    borderColor: Colors.purple,
+                    marginLeft: 10,
+                    marginRight: 0,
+                  },
+                ]}
+              />
+              <View
+                style={[
+                  styles.commentBubble,
+                  isMine && {
+                    backgroundColor: Colors.purple,
+                    opacity: 0.85,
+                    alignItems: "flex-end",
+                  },
+                ]}
               >
-                {item.user.name}
-              </Text>
-              <Text
-                style={[styles.commentText, item.mine && { color: "#fff" }]}
-              >
-                {item.text}
-              </Text>
+                <Text style={[styles.commentUser, isMine && { color: "#fff" }]}>
+                  {item?.user?.person?.username}
+                </Text>
+                <Text style={[styles.commentText, isMine && { color: "#fff" }]}>
+                  {item?.comment}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
+          );
+        }}
       />
-
-      {/* Floating hearts */}
-      <View style={styles.heartsContainer}>
-        <Text style={styles.heart}>❤️</Text>
-        <Text style={[styles.heart, { left: 30, top: 30, fontSize: 18 }]}>
-          ❤️
-        </Text>
-        <Text style={[styles.heart, { left: 60, top: 10, fontSize: 16 }]}>
-          ❤️
-        </Text>
-      </View>
 
       {/* Comment Input */}
       <View style={styles.inputBar}>
@@ -179,8 +200,11 @@ const CurrentEventChat: React.FC = () => {
           style={styles.input}
           placeholder="Write a Comment..."
           placeholderTextColor={Colors.gray}
+          onChangeText={setInput}
+          value={input}
+          onSubmitEditing={handleSend}
         />
-        <TouchableOpacity style={styles.sendBtn}>
+        <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
           <Ionicons name="send" size={18} color="#fff" />
         </TouchableOpacity>
       </View>

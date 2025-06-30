@@ -101,6 +101,7 @@ export const SocketEvents = {
     NEW_EVENT_INCOMING: "event/new-event-coming",
     USER_JOINING: "event/user-joining-event",
     USER_LEFT: "event/user-left-event",
+    NEW_COMMENT: "event/new-comment",
   },
 };
 
