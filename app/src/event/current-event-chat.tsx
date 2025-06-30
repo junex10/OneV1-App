@@ -25,11 +25,6 @@ const server = Constants.expoConfig?.extra?.SERVER;
 const bgImage =
   "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80";
 
-const eventUser = {
-  name: "Hollan Martino",
-  avatar: "https://randomuser.me/api/portraits/women/65.jpg",
-};
-
 const CurrentEventChat: React.FC = () => {
   const router = useRouter();
   const { current_event } = useLocalSearchParams();
@@ -38,6 +33,7 @@ const CurrentEventChat: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [currentEvent, setCurrentEvent] = useState<any>(null);
   const [comments, setComments] = useState<any>();
+  const [backgroundPic, setBackgroundPic] = useState<any>();
   const [input, setInput] = useState("");
 
   useEffect(() => {
@@ -61,17 +57,22 @@ const CurrentEventChat: React.FC = () => {
       const getUser = await Storage.get("user");
       setUser(getUser);
 
+      setBackgroundPic(eventForm?.event_type?.default_pic);
+
       const getComments = await Events.getComments({ event_id: eventForm?.id });
       setComments(getComments?.comments);
     })();
   }, []);
 
   useEffect(() => {
-    eventBus.on(SocketEvents.EVENTS.NEW_COMMENT, (receiver: any) => {
-      console.log(receiver, " HERE BB ");
-    });
+    const onNewComment = (receiver: any) => {
+      if (receiver?.comment) {
+        setComments((prev: any[]) => [...(prev || []), receiver.comment]);
+      }
+    };
+    eventBus.on(SocketEvents.EVENTS.NEW_COMMENT, onNewComment);
     return () => {
-      eventBus.off(SocketEvents.EVENTS.NEW_COMMENT);
+      eventBus.off(SocketEvents.EVENTS.NEW_COMMENT, onNewComment);
     };
   }, []);
 
@@ -112,10 +113,11 @@ const CurrentEventChat: React.FC = () => {
       user_id: user?.user?.id,
       comment: input,
     });
+    setInput("");
   };
 
   return (
-    <ImageBackground source={{ uri: bgImage }} style={styles.bg}>
+    <ImageBackground source={{ uri: server + backgroundPic }} style={styles.bg}>
       {/* Top Bar with avatar, name, timer, close */}
       <View style={styles.topBarFull}>
         <Image
@@ -130,7 +132,9 @@ const CurrentEventChat: React.FC = () => {
           <Text style={styles.userName}>
             {currentEvent?.user?.person?.username}
           </Text>
-          <Text style={styles.time}>{elapsed}</Text>
+          <Text style={[styles.time, { minWidth: 70, textAlign: "left" }]}>
+            {elapsed}
+          </Text>
         </View>
         <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
@@ -145,7 +149,7 @@ const CurrentEventChat: React.FC = () => {
       {/* Comments */}
       <FlatList
         data={comments}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `comment-${index}`}
         style={styles.commentsList}
         contentContainerStyle={{ paddingBottom: 60 }}
         renderItem={({ item }) => {

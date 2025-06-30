@@ -60,18 +60,24 @@ const CurrentEventList: React.FC = () => {
 
   useEffect(() => {
     eventBus.on(SocketEvents.EVENTS.USER_JOINING, (data) => {
-      setEvents((prevEvents: any[]) =>
-        prevEvents.map((event) =>
-          event.id === data.data.event_id ? { ...event, joined: true } : event
-        )
-      );
+      if (data) {
+        setEvents((prevEvents: any[]) =>
+          prevEvents.map((event) =>
+            event.id === data.data.event_id ? { ...event, joined: true } : event
+          )
+        );
+      }
     });
     eventBus.on(SocketEvents.EVENTS.USER_LEFT, (data) => {
-      setEvents((prevEvents: any[]) =>
-        prevEvents.map((event) =>
-          event.id === data.data.event_id ? { ...event, joined: false } : event
-        )
-      );
+      if (data) {
+        setEvents((prevEvents: any[]) =>
+          prevEvents.map((event) =>
+            event.id === data.data.event_id
+              ? { ...event, joined: false }
+              : event
+          )
+        );
+      }
     });
     return () => {
       eventBus.off(SocketEvents.EVENTS.USER_JOINING);
