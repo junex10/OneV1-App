@@ -52,6 +52,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket?.on(SocketEvents.EVENTS.NEW_COMMENT, (data: any) =>
       eventBus.emit(SocketEvents.EVENTS.NEW_COMMENT, data)
     );
+    socket?.on(SocketEvents.EVENTS.NEW_LIKE, (data: any) =>
+      eventBus.emit(SocketEvents.EVENTS.NEW_LIKE, data)
+    );
 
     // We check if there is any event that we're hosting coming out
     (async () => {

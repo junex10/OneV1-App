@@ -28,6 +28,7 @@ const bgImage =
 const CurrentEventChat: React.FC = () => {
   const router = useRouter();
   const { current_event } = useLocalSearchParams();
+  const flatListRef = React.useRef<FlatList>(null);
 
   const [elapsed, setElapsed] = useState("00:00:00");
   const [user, setUser] = useState<any>(null);
@@ -95,6 +96,12 @@ const CurrentEventChat: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentEvent?.starting_event]);
 
+  useEffect(() => {
+    if (flatListRef.current && comments?.length) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [comments]);
+
   const formatTime = (totalSeconds: number) => {
     const h = Math.floor(totalSeconds / 3600)
       .toString()
@@ -148,6 +155,7 @@ const CurrentEventChat: React.FC = () => {
 
       {/* Comments */}
       <FlatList
+        ref={flatListRef}
         data={comments}
         keyExtractor={(item, index) => `comment-${index}`}
         style={styles.commentsList}

@@ -9,7 +9,11 @@ import {
   Dimensions,
   TouchableOpacity,
 } from "react-native";
-import { Colors, SocketEvents } from "../../../resources/utils/global";
+import {
+  Colors,
+  SocketEvents,
+  eventBus,
+} from "../../../resources/utils/global";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Storage } from "../../../resources/utils";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,7 +39,6 @@ const CurrentEvent: React.FC = () => {
   const [viewAllVisible, setViewAllVisible] = useState(false);
   const [countComments, setCountComments] = useState<number>(0);
   const [likes, setLikes] = useState(currentEvent?.likes || 0);
-  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
     const event = event_id ? JSON.parse(event_id as string) : null;
@@ -46,6 +49,8 @@ const CurrentEvent: React.FC = () => {
 
       const eventData = await Events.getEvent({ event_id: event });
       setCurrentEvent(eventData?.place);
+
+      setLikes(eventData?.place?.likes);
 
       const viewersData = await Events.getViewers({
         event_id: event,
@@ -70,17 +75,28 @@ const CurrentEvent: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    eventBus.on(SocketEvents.EVENTS.NEW_LIKE, (data: any) => {
+      setLikes(data?.comment?.likes);
+    });
+
+    return () => {
+      eventBus.off(SocketEvents.EVENTS.NEW_LIKE);
+    };
+  }, []);
+
   const handleLike = () => {
-    if (!liked) {
-      setLikes(likes + 1);
-      setLiked(true);
-      // Optionally, call your API to persist the like
-      // await Events.likeEvent({ event_id: currentEvent.id, user_id: user.user.id });
-    } else {
-      setLikes(likes - 1);
-      setLiked(false);
-      // Optionally, call your API to remove the like
-    }
+    socket?.emit(SocketEvents.EVENTS.NEW_LIKE, {
+      event_id: currentEvent?.id,
+      user_id: user?.user?.id,
+    });
+  };
+
+  const formatNumber = (num: number) => {
+    if (num >= 1_000_000)
+      return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    return num.toString();
   };
 
   return (
@@ -121,6 +137,15 @@ const CurrentEvent: React.FC = () => {
                 style={{ marginRight: 4 }}
               />
               <Text style={styles.statText}>{countComments}</Text>
+            </View>
+            <View style={styles.statItemWithBg}>
+              <Ionicons
+                name="heart"
+                size={17}
+                color="#fff"
+                style={{ marginRight: 4 }}
+              />
+              <Text style={styles.statText}>{formatNumber(likes)}</Text>
             </View>
           </View>
           <TouchableOpacity
@@ -205,18 +230,15 @@ const CurrentEvent: React.FC = () => {
       <View style={styles.bottomActions}>
         <TouchableOpacity
           onPress={handleLike}
-          style={styles.likeButton}
+          style={[styles.likeButton, { justifyContent: "center" }]}
           activeOpacity={0.8}
         >
           <Ionicons
-            name={liked ? "heart" : "heart-outline"}
+            name={"heart"}
             size={34}
-            color={liked ? Colors.purple : "#fff"}
-            style={{ marginRight: 10 }}
+            color={"#fff"}
+            style={{ marginRight: 0 }}
           />
-          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 22 }}>
-            {likes}
-          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.commentsButton}
@@ -249,6 +271,7 @@ const styles = StyleSheet.create({
   likeButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: Colors.purple,
     borderRadius: 30,
     paddingVertical: 12,
