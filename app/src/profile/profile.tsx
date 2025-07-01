@@ -252,7 +252,7 @@ const Profile: React.FC = () => {
           {/* First two events side by side */}
           <View style={styles.eventsRow}>
             {events.slice(0, 2).map((item) => (
-              <View
+              <TouchableOpacity
                 style={[
                   styles.eventCardHalf,
                   {
@@ -260,6 +260,14 @@ const Profile: React.FC = () => {
                   },
                 ]}
                 key={item.id}
+                onPress={() => {
+                  router.push({
+                    pathname: "/src/event/current-event",
+                    params: {
+                      event_id: JSON.stringify(item.id),
+                    },
+                  });
+                }}
               >
                 <Image
                   source={{
@@ -285,19 +293,8 @@ const Profile: React.FC = () => {
                       </Text>
                     </View>
                   ) : null}
-                  <View style={styles.eventRow}>
-                    <Ionicons
-                      name="person-outline"
-                      size={15}
-                      color={Colors.purple}
-                      style={{ marginRight: 4 }}
-                    />
-                    <Text style={styles.eventUsername}>
-                      {item.user?.user?.person?.username}
-                    </Text>
-                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
           {/* The rest as a vertical list */}
@@ -305,7 +302,17 @@ const Profile: React.FC = () => {
             data={events.slice(2)}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View style={styles.eventCardFull}>
+              <TouchableOpacity
+                style={styles.eventCardFull}
+                onPress={() => {
+                  router.push({
+                    pathname: "/src/event/current-event",
+                    params: {
+                      event_id: JSON.stringify(item.id),
+                    },
+                  });
+                }}
+              >
                 <Image
                   source={{
                     uri: item.main_pic
@@ -328,19 +335,8 @@ const Profile: React.FC = () => {
                       <Text style={styles.eventAddress}>{item.address}</Text>
                     </View>
                   ) : null}
-                  <View style={styles.eventRow}>
-                    <Ionicons
-                      name="person-outline"
-                      size={15}
-                      color={Colors.purple}
-                      style={{ marginRight: 4 }}
-                    />
-                    <Text style={styles.eventUsername}>
-                      {item.user?.user?.person?.username}
-                    </Text>
-                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             )}
             contentContainerStyle={styles.eventsListVertical}
             showsVerticalScrollIndicator={false}
