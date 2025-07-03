@@ -59,6 +59,7 @@ const Map: React.FC = () => {
   const [eventsList, setEventsList] = useState([]); // -> will contain a list of events to show when you're searching in the search bar
   const [searchEditable, setSearchEditable] = useState<boolean>(true); // will control the editable of the search bar
   const [newEventCreated, setNewEventCreated] = useState<boolean>(false); // When we create a new event, we'll skip the left event thing
+  const [routeInfo, setRouteInfo] = useState<any>(null);
 
   const mapRef = useRef<MapView>(null);
 
@@ -320,33 +321,37 @@ const Map: React.FC = () => {
       />
 
       {/**  Search One */}
-      <View style={styles.searchBarContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons
-            name="search"
-            size={20}
-            color={Colors.gray}
-            style={{ marginRight: 10 }}
-          />
-          <TextInput
-            ref={searchInputRef}
-            style={styles.searchBarInput}
-            placeholder="Find your One"
-            value={search}
-            placeholderTextColor={Colors.gray}
-            underlineColorAndroid="transparent"
-            onFocus={() => {
-              setShowSearchTab(true);
-              setSearchEditable(false);
-            }}
-            onBlur={() => {
-              setShowSearchTab(true);
-              setSearchEditable(false);
-            }}
-            editable={searchEditable}
-          />
+      {/** Hiden it when we are on a route */}
+      {!hasArrived && !currentRide && (
+        <View style={styles.searchBarContainer}>
+          <View style={styles.searchBar}>
+            <Ionicons
+              name="search"
+              size={20}
+              color={Colors.gray}
+              style={{ marginRight: 10 }}
+            />
+            <TextInput
+              ref={searchInputRef}
+              style={styles.searchBarInput}
+              placeholder="Find your One"
+              value={search}
+              placeholderTextColor={Colors.gray}
+              underlineColorAndroid="transparent"
+              onFocus={() => {
+                setShowSearchTab(true);
+                setSearchEditable(false);
+              }}
+              onBlur={() => {
+                setShowSearchTab(true);
+                setSearchEditable(false);
+              }}
+              editable={searchEditable}
+            />
+          </View>
         </View>
-      </View>
+      )}
+
       {/**  Event search tab */}
       {showSearchTab && (
         <View style={styles.fullScreenTab}>
@@ -380,6 +385,7 @@ const Map: React.FC = () => {
                 style={styles.eventCard}
                 onPress={() => {
                   setShowSearchTab(false);
+                  setSearchEditable(true);
                   getEvent(item);
                 }}
                 activeOpacity={0.9}
@@ -442,6 +448,7 @@ const Map: React.FC = () => {
             style={styles.fabCloseButton}
             onPress={() => {
               setShowSearchTab(false);
+              setSearchEditable(true);
               searchInputRef.current?.blur();
             }}
             activeOpacity={0.8}
@@ -517,7 +524,7 @@ const Map: React.FC = () => {
         customMapStyle={mapCustomStyle}
         showsMyLocationButton={false}
       >
-        {/**  Show this when we wanna go that place chose */}
+        {/**  Show this when we wanna go that place chosen */}
         {currentPlace && !hasArrived && getLocation?.coords && (
           <MapViewDirections
             strokeColor={Colors.purple}
@@ -590,6 +597,18 @@ const Map: React.FC = () => {
                   { duration: 100 }
                 );
               }
+              // Calculate arrival time
+              const now = new Date();
+              const arrival = new Date(now.getTime() + result.duration * 60000);
+              const arrivalStr = arrival.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+              setRouteInfo({
+                duration: result.duration,
+                distance: result.distance,
+                arrival: arrivalStr,
+              });
             }}
           />
         )}
@@ -605,29 +624,57 @@ const Map: React.FC = () => {
                   longitude: Number(itemPlace?.longitude),
                 }}
                 title={itemPlace?.content}
-                pinColor={Colors.purple}
                 onPress={() => getEvent(itemPlace)}
               >
+                {/** We must show different icons depending on the event type */}
                 <View style={styles.placeMarker}>
-                  {itemPlace?.main_pic ? (
-                    <Image
-                      source={{ uri: itemPlace?.main_pic }}
-                      style={styles.placeMarkerImg}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <Ionicons
-                      name="location-outline"
-                      size={20}
-                      color={Colors.purple}
-                    />
-                  )}
+                  <Ionicons name="balloon" size={27} color={Colors.purple} />
                 </View>
               </Marker>
             ))}
           </>
         )}
       </MapView>
+
+      {/** We show the information of the trip here */}
+      {routeInfo && currentRide && !hasArrived && (
+        <View style={styles.rideInformationTab}>
+          <View>
+            <Text
+              style={{ color: Colors.gray, fontWeight: "bold", fontSize: 16 }}
+            >
+              ETA: {Math.round(routeInfo.duration)} min
+            </Text>
+            <Text style={{ color: Colors.gray, fontSize: 15 }}>
+              Distance: {(routeInfo.distance * 0.621371).toFixed(2)} mi
+            </Text>
+            <Text style={{ color: Colors.gray, fontSize: 15 }}>
+              Arrival: {routeInfo.arrival}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => {
+              setCurrentRide(false);
+              setShowDirection(false);
+              setRouteInfo(null);
+              setHasArrived(false);
+              setCurrentPlace(null);
+              setEvents([]);
+              animateZoom(defaultZoom);
+              setSeekingEvent(false);
+            }}
+            style={{
+              backgroundColor: Colors.purple,
+              borderRadius: 20,
+              padding: 10,
+              marginLeft: 16,
+            }}
+          >
+            <Ionicons name="close" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {showDirection && (
         <View style={styles.destinationConfirm}>
           <Text style={styles.destinationConfirmText}>
@@ -826,10 +873,6 @@ const styles = StyleSheet.create({
     padding: 5,
     borderRadius: 24,
   },
-  placeMarkerImg: {
-    width: 20,
-    height: 20,
-  },
   destinationConfirm: {
     position: "absolute",
     left: 16,
@@ -993,6 +1036,28 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 13,
+  },
+  rideInformationTab: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: Colors.blue_dark_2,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    padding: 24,
+    zIndex: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 120,
+    elevation: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -2 },
   },
 });
 

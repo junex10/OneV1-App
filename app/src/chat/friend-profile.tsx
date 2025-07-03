@@ -142,7 +142,7 @@ const FriendProfile: React.FC = () => {
       {/* First two events side by side */}
       <View style={styles.eventsRow}>
         {events.slice(0, 2).map((item) => (
-          <View
+          <TouchableOpacity
             style={[
               styles.eventCardHalf,
               {
@@ -150,6 +150,14 @@ const FriendProfile: React.FC = () => {
               },
             ]}
             key={item.id}
+            onPress={() => {
+              router.push({
+                pathname: "/src/event/current-event",
+                params: {
+                  event_id: JSON.stringify(item.id),
+                },
+              });
+            }}
           >
             <Image
               source={{
@@ -176,7 +184,7 @@ const FriendProfile: React.FC = () => {
                 </View>
               ) : null}
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
       {/* The rest as a vertical list */}
@@ -184,7 +192,17 @@ const FriendProfile: React.FC = () => {
         data={events.slice(2)}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.eventCardFull}>
+          <TouchableOpacity
+            style={styles.eventCardFull}
+            onPress={() => {
+              router.push({
+                pathname: "/src/event/current-event",
+                params: {
+                  event_id: JSON.stringify(item.id),
+                },
+              });
+            }}
+          >
             <Image
               source={{
                 uri: item.main_pic
@@ -208,7 +226,7 @@ const FriendProfile: React.FC = () => {
                 </View>
               ) : null}
             </View>
-          </View>
+          </TouchableOpacity>
         )}
         contentContainerStyle={styles.eventsListVertical}
         showsVerticalScrollIndicator={false}
