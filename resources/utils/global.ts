@@ -106,6 +106,14 @@ export const SocketEvents = {
   },
 };
 
+export const EventStatus = {
+  PENDING: 0, // -> Schedule to start later, not started
+  ACTIVE: 1,
+  ALMOST_FINISHED: 2,
+  FINISHED: 3, // This one means that the event finished but other users can joined and see the comments and stuffs
+  CLOSED: 4, //Closed means that the event totally finished and no one beyond the same host can see it
+};
+
 export const eventBus = new EventEmitter();
 
 export const getBase64FromUri = async (uri: string) => {

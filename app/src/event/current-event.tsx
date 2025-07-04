@@ -13,6 +13,7 @@ import {
   Colors,
   SocketEvents,
   eventBus,
+  EventStatus,
 } from "../../../resources/utils/global";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Storage } from "../../../resources/utils";
@@ -39,6 +40,7 @@ const CurrentEvent: React.FC = () => {
   const [viewAllVisible, setViewAllVisible] = useState(false);
   const [countComments, setCountComments] = useState<number>(0);
   const [likes, setLikes] = useState(currentEvent?.likes || 0);
+  const [status, setStatus] = useState<any>();
 
   useEffect(() => {
     const event = event_id ? JSON.parse(event_id as string) : null;
@@ -49,6 +51,7 @@ const CurrentEvent: React.FC = () => {
 
       const eventData = await Events.getEvent({ event_id: event });
       setCurrentEvent(eventData?.place);
+      setStatus(eventData?.place?.status);
 
       setLikes(eventData?.place?.likes);
 
@@ -230,8 +233,16 @@ const CurrentEvent: React.FC = () => {
       <View style={styles.bottomActions}>
         <TouchableOpacity
           onPress={handleLike}
-          style={[styles.likeButton, { justifyContent: "center" }]}
+          style={[
+            styles.likeButton,
+            {
+              justifyContent: "center",
+              backgroundColor:
+                status === EventStatus.CLOSED ? Colors.gray : Colors.purple,
+            },
+          ]}
           activeOpacity={0.8}
+          disabled={status === EventStatus.CLOSED ? true : false}
         >
           <Ionicons
             name={"heart"}

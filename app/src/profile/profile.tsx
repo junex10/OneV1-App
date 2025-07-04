@@ -297,6 +297,18 @@ const Profile: React.FC = () => {
               </TouchableOpacity>
             ))}
           </View>
+          {events.length === 0 && (
+            <Text
+              style={{
+                color: "#bfc8d6",
+                textAlign: "center",
+                marginTop: 32,
+                fontSize: 16,
+              }}
+            >
+              No events to show yet.
+            </Text>
+          )}
           {/* The rest as a vertical list */}
           <FlatList
             data={events.slice(2)}

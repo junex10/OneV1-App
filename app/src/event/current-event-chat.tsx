@@ -10,7 +10,11 @@ import {
   TextInput,
   Dimensions,
 } from "react-native";
-import { Colors, SocketEvents } from "../../../resources/utils/global";
+import {
+  Colors,
+  SocketEvents,
+  EventStatus,
+} from "../../../resources/utils/global";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Storage, eventBus } from "../../../resources/utils";
@@ -21,9 +25,6 @@ import moment from "moment";
 
 const { width, height } = Dimensions.get("window");
 const server = Constants.expoConfig?.extra?.SERVER;
-
-const bgImage =
-  "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80";
 
 const CurrentEventChat: React.FC = () => {
   const router = useRouter();
@@ -36,6 +37,7 @@ const CurrentEventChat: React.FC = () => {
   const [comments, setComments] = useState<any>();
   const [backgroundPic, setBackgroundPic] = useState<any>();
   const [input, setInput] = useState("");
+  const [status, setStatus] = useState<any>();
 
   useEffect(() => {
     // Fake timer for UI
@@ -59,6 +61,7 @@ const CurrentEventChat: React.FC = () => {
       setUser(getUser);
 
       setBackgroundPic(eventForm?.event_type?.default_pic);
+      setStatus(eventForm?.status);
 
       const getComments = await Events.getComments({ event_id: eventForm?.id });
       setComments(getComments?.comments);
@@ -126,7 +129,12 @@ const CurrentEventChat: React.FC = () => {
   return (
     <ImageBackground source={{ uri: server + backgroundPic }} style={styles.bg}>
       {/* Top Bar with avatar, name, timer, close */}
-      <View style={styles.topBarFull}>
+      <View
+        style={[
+          styles.topBarFull,
+          status === EventStatus.CLOSED && { bottom: 60 },
+        ]}
+      >
         <Image
           source={{
             uri: currentEvent?.user?.photo
@@ -205,21 +213,24 @@ const CurrentEventChat: React.FC = () => {
           );
         }}
       />
-
       {/* Comment Input */}
-      <View style={styles.inputBar}>
-        <TextInput
-          style={styles.input}
-          placeholder="Write a Comment..."
-          placeholderTextColor={Colors.gray}
-          onChangeText={setInput}
-          value={input}
-          onSubmitEditing={handleSend}
-        />
-        <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
-          <Ionicons name="send" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      {status !== EventStatus.CLOSED ? (
+        <View style={styles.inputBar}>
+          <TextInput
+            style={styles.input}
+            placeholder="Write a Comment..."
+            placeholderTextColor={Colors.gray}
+            onChangeText={setInput}
+            value={input}
+            onSubmitEditing={handleSend}
+          />
+          <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
+            <Ionicons name="send" size={18} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={{ height: 32 }} /> // Spacer for visual balance
+      )}
     </ImageBackground>
   );
 };
