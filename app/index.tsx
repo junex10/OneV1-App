@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   title: {
-    color: "#fff",
+    color: Colors.purple,
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",

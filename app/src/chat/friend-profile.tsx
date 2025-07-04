@@ -32,6 +32,7 @@ const FriendProfile: React.FC = () => {
   const [blocked, setBlocked] = useState<boolean | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [events, setEvents] = useState<any[]>([]);
+  const [subscribers, setSubscribers] = useState<any>(0);
 
   const checkSubscription = async (friendId: number) => {
     const currentUser = await Storage.get("user");
@@ -55,6 +56,7 @@ const FriendProfile: React.FC = () => {
           photo: `${server}storage/${getFriend.photo}`,
         },
       });
+      setSubscribers(getFriend?.person?.subscribers);
       DEFAULT_PIC = `${server}storage/${getFriend.photo}`;
       const eventsData = await Events.getEventsByUser({
         user_id: getFriend.id,
@@ -68,14 +70,28 @@ const FriendProfile: React.FC = () => {
   const subscribeFriend = async () => {
     try {
       const currentUser = await Storage.get("user");
-      await FriendService.setFriend({
+      const data = await FriendService.setFriend({
         sender_id: currentUser.user.id,
         receiver_id: user.user?.id,
       });
       setSubscribe((prev) => !prev);
+
+      // We update the number of subscribers
+
+      setTimeout(() => {
+        setSubscribers((prev: any) => Number(data?.places?.subscribers));
+      }, 500);
     } catch (e) {
       Alert.prompt("Error has occurred");
     }
+  };
+
+  const formatSubscribers = (num: number) => {
+    if (num >= 1_000_000)
+      return (num / 1_000_000).toFixed(num % 1_000_000 === 0 ? 0 : 1) + "M";
+    if (num >= 1_000)
+      return (num / 1_000).toFixed(num % 1_000 === 0 ? 0 : 1) + "K";
+    return num.toString();
   };
 
   return (
@@ -100,7 +116,7 @@ const FriendProfile: React.FC = () => {
             <Text style={styles.email}>{user?.user?.email}</Text>
             <View style={styles.addressRow}></View>
             <Text style={styles.subscribers}>
-              {`${user?.user?.person?.subscribers} `} subscribers
+              {`${formatSubscribers(subscribers)} `} subscribers
             </Text>
           </View>
         </>
@@ -187,6 +203,19 @@ const FriendProfile: React.FC = () => {
           </TouchableOpacity>
         ))}
       </View>
+      {events.length === 0 && (
+        <Text
+          style={{
+            color: "#bfc8d6",
+            textAlign: "center",
+            marginTop: 32,
+            fontSize: 16,
+          }}
+        >
+          No events to show yet.
+        </Text>
+      )}
+
       {/* The rest as a vertical list */}
       <FlatList
         data={events.slice(2)}
