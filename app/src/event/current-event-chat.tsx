@@ -40,17 +40,6 @@ const CurrentEventChat: React.FC = () => {
   const [status, setStatus] = useState<any>();
 
   useEffect(() => {
-    // Fake timer for UI
-    let seconds = 8 * 60 + 35; // 8 minutes, 35 seconds
-    setElapsed(formatTime(seconds));
-    const interval = setInterval(() => {
-      seconds++;
-      setElapsed(formatTime(seconds));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
     const eventForm = current_event
       ? JSON.parse(current_event as string)
       : null;
@@ -80,24 +69,38 @@ const CurrentEventChat: React.FC = () => {
     };
   }, []);
 
-  // Calculate elapsed time based on starting_event
   useEffect(() => {
     if (!currentEvent?.starting_event) return;
 
-    const updateElapsed = () => {
-      const start = moment(currentEvent.starting_event);
-      const now = moment();
-      const duration = moment.duration(now.diff(start));
-      const h = String(Math.floor(duration.asHours())).padStart(2, "0");
-      const m = String(duration.minutes()).padStart(2, "0");
-      const s = String(duration.seconds()).padStart(2, "0");
-      setElapsed(`${h}:${m}:${s}`);
-    };
+    // If event is finished or closed, show total duration and do not start timer
+    if (status === EventStatus.FINISHED || status === EventStatus.CLOSED) {
+      if (currentEvent?.expiration_time && currentEvent?.starting_event) {
+        console.log(currentEvent, "hg");
+        const start = moment(currentEvent.starting_event);
+        const end = moment(currentEvent.expiration_time);
+        const duration = moment.duration(end.diff(start));
+        const h = String(Math.floor(duration.asHours())).padStart(2, "0");
+        const m = String(duration.minutes()).padStart(2, "0");
+        const s = String(duration.seconds()).padStart(2, "0");
+        setElapsed(`${h}:${m}:${s}`);
+      }
+      return;
+    } else {
+      const updateElapsed = () => {
+        const start = moment(currentEvent.starting_event);
+        const now = moment();
+        const duration = moment.duration(now.diff(start));
+        const h = String(Math.floor(duration.asHours())).padStart(2, "0");
+        const m = String(duration.minutes()).padStart(2, "0");
+        const s = String(duration.seconds()).padStart(2, "0");
+        setElapsed(`${h}:${m}:${s}`);
+      };
 
-    updateElapsed();
-    const interval = setInterval(updateElapsed, 1000);
-    return () => clearInterval(interval);
-  }, [currentEvent?.starting_event]);
+      updateElapsed();
+      const interval = setInterval(updateElapsed, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [currentEvent?.starting_event, status]);
 
   useEffect(() => {
     if (flatListRef.current && comments?.length) {

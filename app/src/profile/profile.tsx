@@ -140,6 +140,12 @@ const Profile: React.FC = () => {
     }
   };
 
+  const logout = () => {
+    Storage.remove("user");
+    Storage.remove("current_event");
+    router.replace("/");
+  };
+
   if (selectedField) {
     return (
       <View style={styles.editContainer}>
@@ -227,7 +233,7 @@ const Profile: React.FC = () => {
         <TouchableOpacity
           style={styles.tab}
           onPress={() => {
-            setPickingPic(false); // We finished uploading a new pic
+            setPickingPic(false);
             setTab("events");
           }}
         >
@@ -245,6 +251,9 @@ const Profile: React.FC = () => {
             Settings
           </Text>
           {tab === "settings" && <View style={styles.tabUnderline} />}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tab} onPress={logout}>
+          <Text style={[styles.tabText, { color: Colors.purple }]}>Logout</Text>
         </TouchableOpacity>
       </View>
       {tab === "events" ? (
@@ -528,6 +537,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 24,
     marginBottom: 12,
+    marginTop: 24,
   },
   eventCardHalf: {
     width: (width - 24 * 2 - 12) / 2, // 2 cards with 12px gap

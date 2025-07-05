@@ -117,6 +117,15 @@ const CurrentEventList: React.FC = () => {
           onChangeText={setSearch}
         />
       </View>
+      {filteredEvents.length === 0 && (
+        <View style={{ alignItems: "center", marginTop: 48 }}>
+          <Text
+            style={{ color: Colors.gray, fontSize: 17, textAlign: "center" }}
+          >
+            No events found.
+          </Text>
+        </View>
+      )}
       <FlatList
         data={filteredEvents}
         keyExtractor={(item) => item.id}

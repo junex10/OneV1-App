@@ -173,12 +173,6 @@ const Map: React.FC = () => {
     setCurrentRide(true);
   };
 
-  const logout = () => {
-    Storage.remove("user");
-    Storage.remove("current_event");
-    router.replace("/");
-  };
-
   const searchOne = async (text: string) => {
     setSearch(text);
 
@@ -748,13 +742,6 @@ const Map: React.FC = () => {
               >
                 <Ionicons
                   name="person-outline"
-                  size={28}
-                  color={Colors.purple}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.fabNavItem} onPress={logout}>
-                <Ionicons
-                  name="log-out-outline"
                   size={28}
                   color={Colors.purple}
                 />
