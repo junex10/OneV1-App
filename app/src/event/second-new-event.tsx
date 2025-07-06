@@ -119,6 +119,7 @@ const GoogleMapTab = ({
         customMapStyle={mapCustomStyle}
         showsMyLocationButton={false}
         onPress={onPress}
+        onPoiClick={onPress}
       >
         {selectedCoords && (
           <Marker coordinate={selectedCoords} pinColor={Colors.purple} />
