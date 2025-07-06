@@ -17,6 +17,9 @@ interface CustomModalProps {
   }>;
   onClose: () => void;
   timeout?: number;
+  onConfirm?: () => void;
+  confirmText?: string;
+  cancelText?: string;
 }
 
 const CustomModal: React.FC<CustomModalProps> = ({
@@ -29,6 +32,9 @@ const CustomModal: React.FC<CustomModalProps> = ({
   buttons = [],
   onClose,
   timeout,
+  onConfirm,
+  confirmText,
+  cancelText,
 }) => {
   useEffect(() => {
     let timeOut: any;
@@ -42,6 +48,45 @@ const CustomModal: React.FC<CustomModalProps> = ({
       clearTimeout(timeOut);
     };
   }, [timeout, onClose]);
+
+  const renderButtons = () => {
+    if (onConfirm || confirmText || cancelText) {
+      return (
+        <View style={styles.buttonsRow}>
+          {cancelText && (
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: Colors.gray }]}
+              onPress={onClose}
+            >
+              <Text style={styles.buttonText}>{cancelText}</Text>
+            </TouchableOpacity>
+          )}
+          {confirmText && (
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#FD3A73" }]}
+              onPress={onConfirm}
+            >
+              <Text style={styles.buttonText}>{confirmText}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    }
+    // Fallback to custom buttons array
+    return (
+      <View style={styles.buttonsRow}>
+        {buttons.map((btn, idx) => (
+          <TouchableOpacity
+            key={idx}
+            style={[styles.button, { backgroundColor: btn.color || "#FD3A73" }]}
+            onPress={btn.onPress}
+          >
+            <Text style={styles.buttonText}>{btn.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
 
   return (
     <Modal
@@ -63,20 +108,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
           ) : null}
           {title && <Text style={styles.title}>{title}</Text>}
           <Text style={styles.message}>{message}</Text>
-          <View style={styles.buttonsRow}>
-            {buttons.map((btn, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[
-                  styles.button,
-                  { backgroundColor: btn.color || "#FD3A73" },
-                ]}
-                onPress={btn.onPress}
-              >
-                <Text style={styles.buttonText}>{btn.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {renderButtons()}
         </View>
       </View>
     </Modal>
@@ -122,7 +154,7 @@ const styles = StyleSheet.create({
   },
   buttonsRow: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     width: "100%",
   },
   button: {

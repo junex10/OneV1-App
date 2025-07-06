@@ -12,7 +12,7 @@ import { useState, useRef } from "react";
 import { Colors } from "./../../../resources/utils/global";
 import { Ionicons } from "@expo/vector-icons";
 import { Auth } from "../../../resources/services";
-import { Storage } from "../../../resources/utils";
+import { Storage, CustomModal } from "../../../resources/utils";
 
 const Login: React.FC = () => {
   const router = useRouter();
@@ -21,6 +21,8 @@ const Login: React.FC = () => {
 
   const [usernameFocused, setUsernameFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   // Animation refs
   const usernameAnim = useRef(new Animated.Value(1)).current;
@@ -42,11 +44,20 @@ const Login: React.FC = () => {
     if (user?.data) {
       Storage.set("user", user?.data);
       router.replace("/src/map/map");
+    } else {
+      setShowErrorModal(true);
     }
   };
 
   return (
     <View style={styles.container}>
+      <CustomModal
+        visible={showErrorModal}
+        title="Login Failed"
+        message="Incorrect username or password. Please try again."
+        onClose={() => setShowErrorModal(false)}
+        timeout={3000}
+      />
       <TouchableOpacity
         onPress={() => router.back()}
         style={styles.backBtn}

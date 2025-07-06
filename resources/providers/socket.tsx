@@ -57,7 +57,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     );
 
     // We check if there is any event that we're hosting coming out
-    (async () => {
+    /*(async () => {
       const user = await Storage.get("user");
       if (user?.user?.id) {
         interval = setInterval(() => {
@@ -66,7 +66,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
           });
         }, 30000);
       }
-    })();
+    })();*/
 
     return () => {
       socket.disconnect();

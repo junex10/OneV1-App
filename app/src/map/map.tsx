@@ -700,20 +700,27 @@ const Map: React.FC = () => {
               style={styles.fabNavItem}
               onPress={() => router.push("/src/chat/friends-list")} // -> We redirect to our friends list
             >
-              <Ionicons name="people-outline" size={28} color={Colors.purple} />
+              <Ionicons name="people-outline" size={34} color={Colors.purple} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.fabNavItem} onPress={placesNearby}>
-            <Ionicons name="location-outline" size={28} color={Colors.purple} />
-          </TouchableOpacity>
           {user && ( // We must verify that there isnt any event on going, if there is any, we hide the button
             <>
-              {/** -> Add new event, show button where you arent in a current event, you need to log in first */}
               <TouchableOpacity
                 style={styles.fabNavItem}
+                onPress={placesNearby}
+              >
+                <Ionicons
+                  name="location-outline"
+                  size={28}
+                  color={Colors.purple}
+                />
+              </TouchableOpacity>
+              {/** -> Add new event, show button where you arent in a current event, you need to log in first */}
+              <TouchableOpacity
+                style={styles.fabNavCenter}
                 onPress={() => router.push("src/event/first-new-event")}
               >
-                <Ionicons name="add-outline" size={28} color={Colors.purple} />
+                <Ionicons name="add-outline" size={28} color={"#fff"} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.fabNavItem}
@@ -774,7 +781,7 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 24,
     flexDirection: "row",
-    backgroundColor: Colors.blue_dark,
+    backgroundColor: Colors.blue_dark_2,
     borderRadius: 40,
     height: 70,
     alignItems: "center",

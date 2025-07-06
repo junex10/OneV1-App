@@ -43,6 +43,7 @@ const Profile: React.FC = () => {
   const [photo, setPhoto] = useState<string | null>(null);
   const [pickingPic, setPickingPic] = useState<boolean>(false);
   const [photoData, setPhotoData] = useState<{} | null>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -140,10 +141,14 @@ const Profile: React.FC = () => {
     }
   };
 
-  const logout = () => {
+  const handleLogout = () => {
     Storage.remove("user");
     Storage.remove("current_event");
     router.replace("/");
+  };
+
+  const logout = () => {
+    setShowLogoutModal(true);
   };
 
   if (selectedField) {
@@ -181,6 +186,15 @@ const Profile: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <CustomModal
+        visible={showLogoutModal}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        confirmText="Logout"
+        cancelText="Cancel"
+      />
       {success && (
         <CustomModal
           visible={success}

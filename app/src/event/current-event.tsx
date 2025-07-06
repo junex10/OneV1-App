@@ -21,7 +21,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Events } from "../../../resources/services";
 import Constants from "expo-constants";
 import { Modal } from "react-native";
-import moment from "moment";
 import { socket } from "../../../resources/providers/socket";
 
 const { width } = Dimensions.get("window");

@@ -6,20 +6,23 @@ import {
   TextInput,
   TouchableOpacity,
   Keyboard,
+  Animated,
 } from "react-native";
 import { Colors } from "./../../../../resources/utils/global";
-import { useRouter } from "expo-router";
-import { useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Auth } from "../../../../resources/services";
 import { Storage } from "../../../../resources/utils";
+import { Ionicons } from "@expo/vector-icons";
+import CustomModal from "../../../../resources/utils/models";
 
 const CODE_LENGTH = 6;
 
 const VerifyCode: React.FC = () => {
-  const [code, setCode] = useState(Array(CODE_LENGTH).fill(""));
+  const [code, setCode] = useState("");
+  const [codeFocused, setCodeFocused] = useState(false);
+  const [error, setError] = useState(false);
   const [getUser, setUser] = useState<any>(null);
-
-  const inputs = useRef<Array<TextInput | null>>([]);
+  const codeAnim = useRef(new Animated.Value(1)).current;
   const router = useRouter();
   const { user } = useLocalSearchParams();
 
@@ -28,82 +31,105 @@ const VerifyCode: React.FC = () => {
     setUser(userData);
   }, []);
 
-  const handleChange = (text: string, idx: number) => {
-    if (!/^\d*$/.test(text)) return; // Only allow digits
-    const newCode = [...code];
-    newCode[idx] = text.slice(-1); // Only last digit
-    setCode(newCode);
-
-    // Move to next input if filled
-    if (text && idx < CODE_LENGTH - 1) {
-      inputs.current[idx + 1]?.focus();
-    }
-    // If last digit, dismiss keyboard
-    if (idx === CODE_LENGTH - 1 && text) {
-      Keyboard.dismiss();
-    }
+  const animateInput = (animRef: Animated.Value, toValue: number) => {
+    Animated.spring(animRef, {
+      toValue,
+      useNativeDriver: true,
+      friction: 5,
+    }).start();
   };
 
-  const handleKeyPress = (e: any, idx: number) => {
-    if (e.nativeEvent.key === "Backspace" && !code[idx] && idx > 0) {
-      const newCode = [...code];
-      newCode[idx - 1] = "";
-      setCode(newCode);
-      inputs.current[idx - 1]?.focus();
-    }
+  const handleChange = (text: string) => {
+    if (!/^\d*$/.test(text)) return;
+    if (text.length <= CODE_LENGTH) setCode(text);
+    if (text.length === CODE_LENGTH) Keyboard.dismiss();
   };
 
   const handleConfirm = async () => {
-    const data = await Auth.verifyUser(Number(code.join("")));
+    const data = await Auth.verifyUser(Number(code));
     if (data?.message) {
       Storage.set("user", getUser);
       router.replace("/src/map/map");
+    } else {
+      setError(true);
     }
   };
 
   return (
     <View style={styles.container}>
+      {error && (
+        <CustomModal
+          visible={error}
+          title="Error"
+          message="The code is not correct"
+          onClose={() => setError(false)}
+          timeout={4000}
+        />
+      )}
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={styles.backBtn}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="arrow-back" size={22} color="#fff" />
+      </TouchableOpacity>
       <Text style={styles.title}>Enter confirmation code</Text>
-      <View style={styles.codeContainer}>
-        {code.map((digit, idx) => (
-          <TextInput
-            key={idx}
-            ref={(ref) => {
-              inputs.current[idx] = ref as TextInput | null;
-            }}
-            style={[
-              styles.codeInput,
-              digit ? styles.codeInputFilled : undefined,
-            ]}
-            keyboardType="number-pad"
-            maxLength={1}
-            value={digit}
-            onChangeText={(text) => handleChange(text, idx)}
-            onKeyPress={(e) => handleKeyPress(e, idx)}
-            autoFocus={idx === 0}
-            selectionColor={Colors.purple}
-            textAlign="center"
-            returnKeyType="done"
-          />
-        ))}
-      </View>
+      <Animated.View
+        style={[
+          { transform: [{ scale: codeAnim }], width: "100%" },
+          styles.inputWrapper,
+          codeFocused && styles.inputWrapperFocused,
+        ]}
+      >
+        <Ionicons
+          name="key-outline"
+          size={20}
+          color={codeFocused ? Colors.purple : "#aaa"}
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={[
+            styles.input,
+            {
+              color: codeFocused ? Colors.blue_dark : Colors.gray,
+              letterSpacing: 8,
+              textAlign: "center",
+            },
+          ]}
+          placeholder="------"
+          placeholderTextColor="#aaa"
+          value={code}
+          onChangeText={handleChange}
+          keyboardType="number-pad"
+          maxLength={CODE_LENGTH}
+          onFocus={() => {
+            animateInput(codeAnim, 1.05);
+            setCodeFocused(true);
+          }}
+          onBlur={() => {
+            animateInput(codeAnim, 1);
+            setCodeFocused(false);
+          }}
+          selectionColor={Colors.purple}
+          returnKeyType="done"
+        />
+      </Animated.View>
       <TouchableOpacity
         style={[
           styles.confirmBtn,
           {
-            backgroundColor: code.every((d) => d) ? Colors.purple : Colors.gray,
+            backgroundColor:
+              code.length === CODE_LENGTH ? Colors.purple : Colors.gray,
           },
         ]}
         onPress={handleConfirm}
-        disabled={!code.every((d) => d)}
+        disabled={code.length !== CODE_LENGTH}
       >
         <Text style={styles.confirmBtnText}>Confirm</Text>
       </TouchableOpacity>
     </View>
   );
 };
-
-const INPUT_SIZE = 48;
 
 const styles = StyleSheet.create({
   container: {
@@ -113,6 +139,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
+  backBtn: {
+    position: "absolute",
+    top: 48,
+    left: 24,
+    backgroundColor: Colors.purple,
+    borderRadius: 24,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 2,
+    zIndex: 10,
+  },
   title: {
     color: "#fff",
     fontSize: 22,
@@ -120,33 +159,35 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     textAlign: "center",
   },
-  codeContainer: {
+  inputWrapper: {
     flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 40,
-    gap: 12,
-  },
-  codeInput: {
-    width: INPUT_SIZE,
-    height: INPUT_SIZE,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: Colors.gray,
+    alignItems: "center",
     backgroundColor: Colors.blue_dark,
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginHorizontal: 4,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginBottom: 32,
+    borderWidth: 2,
+    borderColor: "transparent",
     shadowColor: "#000",
     shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
   },
-  codeInputFilled: {
+  inputWrapperFocused: {
     borderColor: Colors.purple,
     backgroundColor: "#fff1fa",
-    color: Colors.purple,
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    color: Colors.blue_dark,
+    fontSize: 22,
+    paddingVertical: 14,
+    backgroundColor: "transparent",
+    letterSpacing: 8,
+    textAlign: "center",
   },
   confirmBtn: {
     width: "100%",

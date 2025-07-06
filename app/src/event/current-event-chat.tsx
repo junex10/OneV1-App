@@ -75,7 +75,6 @@ const CurrentEventChat: React.FC = () => {
     // If event is finished or closed, show total duration and do not start timer
     if (status === EventStatus.FINISHED || status === EventStatus.CLOSED) {
       if (currentEvent?.expiration_time && currentEvent?.starting_event) {
-        console.log(currentEvent, "hg");
         const start = moment(currentEvent.starting_event);
         const end = moment(currentEvent.expiration_time);
         const duration = moment.duration(end.diff(start));
