@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "./../../../resources/utils";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { Storage } from "./../../../resources/utils";
+import { Storage, CustomModal } from "./../../../resources/utils";
 import { ChatService } from "../../../resources/services";
 import { useLocalSearchParams } from "expo-router";
 import Constants from "expo-constants";
@@ -24,6 +24,7 @@ import { socket } from "../../../resources/providers/socket";
 import { SocketEvents, eventBus } from "../../../resources/utils/global";
 import moment from "moment";
 import * as FileSystem from "expo-file-system";
+import Video from "react-native-video";
 
 const server = Constants.expoConfig?.extra?.SERVER;
 
@@ -40,6 +41,11 @@ const Chat: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
   const { friend } = useLocalSearchParams<any>();
   const friendData = friend ? JSON.parse(friend as string) : null;
+  const [showFileError, setShowFileError] = useState(false);
+  const [showFileSizeError, setShowFileSizeError] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+
+  const MAX_FILE_SIZE_MB = 16;
 
   useEffect(() => {
     (async () => {
@@ -102,31 +108,50 @@ const Chat: React.FC = () => {
   const handlePickImage = async () => {
     setSendingImage(true);
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       quality: 0.8,
     });
     setSendingImage(false);
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selected = result.assets[0];
-      const base64 = await FileSystem.readAsStringAsync(selected.uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
 
-      socket?.emit(SocketEvents.NEW_PIC_MESSAGE, {
-        chat_session_id: chatSession?.id,
-        sender_id: user?.user?.id,
-        other_user_id: friendData?.id,
-        attachment: {
-          fileName: selected.fileName,
-          mimeType: selected.mimeType,
-          base64, // send base64 string
-        },
-      });
+      const fileInfo = await FileSystem.getInfoAsync(selected.uri);
+      let fileSizeMB = 0;
+      if (fileInfo.exists && fileInfo.size) {
+        fileSizeMB = fileInfo.size / (1024 * 1024);
+      }
 
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      if (fileSizeMB > MAX_FILE_SIZE_MB) {
+        setShowFileSizeError(true);
+        return;
+      }
+
+      if (
+        selected.mimeType?.startsWith("image/") ||
+        selected.mimeType?.startsWith("video/")
+      ) {
+        const base64 = await FileSystem.readAsStringAsync(selected.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        socket?.emit(SocketEvents.NEW_PIC_MESSAGE, {
+          chat_session_id: chatSession?.id,
+          sender_id: user?.user?.id,
+          other_user_id: friendData?.id,
+          attachment: {
+            fileName: selected.fileName,
+            mimeType: selected.mimeType,
+            base64, // send base64 string
+          },
+        });
+
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      } else {
+        setShowFileError(true);
+      }
     }
   };
 
@@ -136,6 +161,14 @@ const Chat: React.FC = () => {
       "HH:mm",
       moment.ISO_8601,
     ]).format("HH:mm a");
+
+    const isVideo =
+      item.attachment &&
+      (item.attachment.endsWith(".mp4") ||
+        item.attachment.endsWith(".mov") ||
+        item.attachment.endsWith(".webm") ||
+        item.attachment.endsWith(".avi"));
+
     return (
       <View
         style={[
@@ -159,7 +192,37 @@ const Chat: React.FC = () => {
           >
             {item.message}
           </Text>
-          {item.attachment && (
+          {item.attachment && isVideo && (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedVideo(`${server}/storage/${item.attachment}`);
+                setModalVisible(false);
+              }}
+              activeOpacity={0.8}
+            >
+              <Video
+                source={{ uri: `${server}/storage/${item.attachment}` }}
+                style={styles.messageImage}
+                paused={true}
+                resizeMode="cover"
+                muted
+              />
+              <View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Ionicons name="play-circle" size={48} color="#fff" />
+              </View>
+            </TouchableOpacity>
+          )}
+          {item.attachment && !isVideo && (
             <TouchableOpacity
               onPress={() => {
                 setSelectedImage(`${server}/storage/${item.attachment}`);
@@ -184,6 +247,48 @@ const Chat: React.FC = () => {
 
   return (
     <>
+      <CustomModal
+        visible={showFileError}
+        title="Unsupported File"
+        message="Please select an image or video file."
+        onClose={() => setShowFileError(false)}
+        timeout={3000}
+      />
+      <CustomModal
+        visible={showFileSizeError}
+        title="File Too Large"
+        message="The selected file exceeds the 16MB limit."
+        onClose={() => setShowFileSizeError(false)}
+        timeout={3000}
+      />
+      {/* Displays a bigger video */}
+      <Modal
+        visible={!!selectedVideo}
+        transparent={true}
+        onRequestClose={() => setSelectedVideo(null)}
+      >
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.9)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          onPress={() => setSelectedVideo(null)}
+        >
+          {selectedVideo && (
+            <Video
+              source={{ uri: selectedVideo }}
+              style={{ width: "90%", height: "70%", borderRadius: 12 }}
+              resizeMode="contain"
+              controls
+              paused={false}
+            />
+          )}
+        </Pressable>
+      </Modal>
+
+      {/*Display a bigger picture*/}
       <Modal
         visible={modalVisible}
         transparent={true}
