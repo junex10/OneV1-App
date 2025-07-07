@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   StyleSheet,
   TextInput,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../resources/utils";
@@ -20,10 +21,22 @@ const server = Constants.expoConfig?.extra?.SERVER;
 
 const FriendsList: React.FC = () => {
   const [search, setSearch] = useState("");
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const [friends, setFriends] = useState<any[] | null>(null);
   const [filteredFriends, setFilteredFriends] = useState<any[] | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+
+  const fetchFriends = useCallback(async () => {
+    const getUser = await Storage.get("user");
+    setUser(getUser);
+
+    const data = await FriendService.getFriends({
+      user_id: getUser?.user?.id,
+    });
+    setFriends(data?.friends?.friends);
+    setFilteredFriends(data?.friends?.friends);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -39,6 +52,10 @@ const FriendsList: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    fetchFriends();
+  }, [fetchFriends]);
+
+  useEffect(() => {
     if (!friends) return;
     const q = search.trim().toLowerCase();
     if (!q) {
@@ -51,6 +68,36 @@ const FriendsList: React.FC = () => {
       );
     }
   }, [search, friends]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchFriends();
+    setRefreshing(false);
+  };
+
+  const handleAddFriend = async (friend_id: number) => {
+    if (user) {
+      await FriendService.setFriend({
+        sender_id: user.user?.id,
+        receiver_id: friend_id,
+      });
+      // Update local state to reflect the new friend
+      setFilteredFriends((prev) =>
+        prev
+          ? prev.map((item) =>
+              item.id === friend_id ? { ...item, isFriend: true } : item
+            )
+          : prev
+      );
+      setFriends((prev) =>
+        prev
+          ? prev.map((item) =>
+              item.id === friend_id ? { ...item, isFriend: true } : item
+            )
+          : prev
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -91,39 +138,60 @@ const FriendsList: React.FC = () => {
         data={filteredFriends || []}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() =>
-              router.push({
-                pathname: "src/chat/chat",
-                params: {
-                  friend: JSON.stringify(item),
-                },
-              })
-            }
-          >
-            <View style={styles.friendItem}>
-              <Image
-                source={{
-                  uri: item?.photo
-                    ? `${server}storage/${item?.photo}`
-                    : `${server}img/random_location.jpg`,
-                }}
-                style={styles.pic}
-              />
-              <View style={styles.info}>
-                <Text style={styles.username}>{item?.person?.username}</Text>
-              </View>
-
-              <Ionicons // -> This will open the current chat/create a new chat
+          <View style={styles.friendItem}>
+            <Image
+              source={{
+                uri: item?.photo
+                  ? `${server}storage/${item?.photo}`
+                  : `${server}img/random_location.jpg`,
+              }}
+              style={styles.pic}
+            />
+            <View style={styles.info}>
+              <Text style={styles.username}>{item?.person?.username}</Text>
+              {item.isFriend && <Text style={styles.addedText}>Added</Text>}
+            </View>
+            {/* Add button (only if not friend) */}
+            {!item.isFriend && (
+              <TouchableOpacity
+                style={styles.addBtn}
+                onPress={() => handleAddFriend(item.id)}
+              >
+                <Ionicons name="person-add" size={20} color="#fff" />
+                <Text style={styles.addBtnText}>Add</Text>
+              </TouchableOpacity>
+            )}
+            {/* Arrow to chat */}
+            <TouchableOpacity
+              style={styles.arrowBtn}
+              onPress={() =>
+                router.push({
+                  pathname: "src/chat/chat",
+                  params: {
+                    friend: JSON.stringify(item),
+                  },
+                })
+              }
+            >
+              <Ionicons
                 name="arrow-forward-outline"
                 size={28}
                 color={Colors.purple}
                 style={styles.addedIcon}
               />
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
         )}
         contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Colors.purple]}
+            tintColor={Colors.purple}
+            progressBackgroundColor={Colors.blue_dark}
+          />
+        }
       />
     </View>
   );
@@ -232,6 +300,34 @@ const styles = StyleSheet.create({
   },
   addedIcon: {
     marginLeft: 8,
+  },
+  addBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.purple,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginLeft: 8,
+    marginRight: 0,
+  },
+  addBtnText: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 6,
+    fontSize: 15,
+  },
+  arrowBtn: {
+    marginLeft: 8,
+    backgroundColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addedText: {
+    color: Colors.purple,
+    fontSize: 13,
+    fontWeight: "bold",
+    marginTop: 2,
   },
 });
 
