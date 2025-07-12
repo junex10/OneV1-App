@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "438575890441",
+    "project_id": "one-app-5cda4",
+    "storage_bucket": "one-app-5cda4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:438575890441:android:314e8b32bdfe201d3838d8",
+        "android_client_info": {
+          "package_name": "com.pagepro.testpublishapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0cjpmuxcWt-Np11XoKLfplHrUJ5XZ3Z4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
