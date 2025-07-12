@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState } from "react";
 import axios from "axios";
 import Constants from "expo-constants";
 import { ActivityIndicator, View, StyleSheet } from "react-native";
+import { CustomModal, Storage } from "../utils";
+import { useRouter } from "expo-router";
 
 const API = Constants.expoConfig?.extra?.API;
 
@@ -20,13 +22,26 @@ export const api = axios.create({
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const router = useRouter();
   const [spinner, setSpinner] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   // Set up interceptors only once
   React.useEffect(() => {
     const req = api.interceptors.request.use(
-      (config) => {
+      async (config) => {
         setSpinner(true);
+        try {
+          const user = await Storage.get("user");
+          if (user && user.token) {
+            config.headers = config.headers || {};
+            config.headers["authorization"] = user.token;
+          }
+        } catch (e) {
+          // ignore storage errors
+        }
         return config;
       },
       (error) => {
@@ -41,6 +56,11 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
       },
       (error) => {
         setSpinner(false);
+        if (error?.response?.status === 403) {
+          setModalMessage("You do not have permission to access this screen.");
+          setModalVisible(true);
+          setShouldRedirect(true);
+        }
         return Promise.reject(error);
       }
     );
@@ -58,6 +78,20 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
           <ActivityIndicator size="large" color="#FD3A73" />
         </View>
       )}
+      <CustomModal
+        visible={modalVisible}
+        iconName="warning"
+        title="Access Denied"
+        message={modalMessage}
+        onClose={() => {
+          setModalVisible(false);
+          if (shouldRedirect) {
+            setShouldRedirect(false);
+            router.replace("/src/map/map");
+          }
+        }}
+        timeout={3000}
+      />
     </SpinnerContext.Provider>
   );
 };
