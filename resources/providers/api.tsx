@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from "react";
 import axios from "axios";
 import Constants from "expo-constants";
 import { ActivityIndicator, View, StyleSheet } from "react-native";
-import { CustomModal, Storage } from "../utils";
+import { CustomModal, Storage, Colors } from "../utils";
 import { useRouter } from "expo-router";
 
 const API = Constants.expoConfig?.extra?.API;
@@ -27,6 +27,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   // Set up interceptors only once
   React.useEffect(() => {
@@ -50,8 +51,13 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     );
     const res = api.interceptors.response.use(
-      (response) => {
+      async (response) => {
         setSpinner(false);
+        console.log(response?.status, " STATUS ");
+        if (response?.status === 204) {
+          await Storage.remove("user");
+          setSessionExpired(true);
+        }
         return response;
       },
       (error) => {
@@ -75,7 +81,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
       {spinner && (
         <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#FD3A73" />
+          <ActivityIndicator size="large" color={Colors.purple} />
         </View>
       )}
       <CustomModal
@@ -89,6 +95,17 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
             setShouldRedirect(false);
             router.replace("/src/map/map");
           }
+        }}
+        timeout={3000}
+      />
+      <CustomModal
+        visible={sessionExpired}
+        iconName="warning"
+        title="Session Expired"
+        message="Your session has expired. Please log in again."
+        onClose={() => {
+          setSessionExpired(false);
+          router.replace("/");
         }}
         timeout={3000}
       />
