@@ -34,7 +34,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket?.on(SocketEvents.NEW_PIC_MESSAGE, (data: any) =>
       eventBus.emit(SocketEvents.NEW_PIC_MESSAGE, data)
     );
-    socket?.on(SocketEvents.EVENTS.NEW_EVENT_INCOMING, async (data: any) => {
+    /*socket?.on(SocketEvents.EVENTS.NEW_EVENT_INCOMING, async (data: any) => {
       if (data.places?.length > 0) {
         await Storage.set("current_event", data.places);
         eventBus.emit(SocketEvents.EVENTS.NEW_EVENT_INCOMING, data.places);
@@ -42,7 +42,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
         Storage.remove("current_event");
         eventBus.emit(SocketEvents.EVENTS.NEW_EVENT_INCOMING, null);
       }
-    });
+    });*/
     socket?.on(SocketEvents.EVENTS.USER_JOINING, (data: any) =>
       eventBus.emit(SocketEvents.EVENTS.USER_JOINING, data)
     );
