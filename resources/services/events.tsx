@@ -34,6 +34,9 @@ interface GetCommentsDTO {
   count_comments?: boolean;
   last_comment?: boolean;
 }
+interface GetAllPopularEvents {
+  user_id?: number;
+}
 
 const Events = {
   getEvents: async (coordinates: Coordinates) => {
@@ -102,6 +105,18 @@ const Events = {
     try {
       const response = await api.post(
         `${API}app/events/getAllMyEvents`,
+        request
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
+  getAllPopularEvents: async (request: GetAllPopularEvents) => {
+    try {
+      const response = await api.post(
+        `${API}app/events/getAllPopularEvents`,
         request
       );
       return response.data;

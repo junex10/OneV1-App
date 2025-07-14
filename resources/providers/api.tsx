@@ -53,10 +53,10 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
     const res = api.interceptors.response.use(
       async (response) => {
         setSpinner(false);
-        console.log(response?.status, " STATUS ");
         if (response?.status === 204) {
           await Storage.remove("user");
           setSessionExpired(true);
+          setShouldRedirect(true);
         }
         return response;
       },
@@ -105,7 +105,10 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
         message="Your session has expired. Please log in again."
         onClose={() => {
           setSessionExpired(false);
-          router.replace("/");
+          if (shouldRedirect) {
+            setShouldRedirect(false);
+            router.replace("/");
+          }
         }}
         timeout={3000}
       />

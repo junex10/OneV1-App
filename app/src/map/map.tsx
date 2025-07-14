@@ -612,19 +612,15 @@ const Map: React.FC = () => {
           <>
             {events.map((itemPlace: any, index) => (
               <Marker
-                key={`event_marker_${index}`}
                 coordinate={{
                   latitude: Number(itemPlace?.latitude),
                   longitude: Number(itemPlace?.longitude),
                 }}
                 title={itemPlace?.content}
-                onPress={() => getEvent(itemPlace)}
-              >
-                {/** We must show different icons depending on the event type */}
-                <View style={styles.placeMarker}>
-                  <Ionicons name="balloon" size={27} color={Colors.purple} />
-                </View>
-              </Marker>
+                pinColor={Colors.purple}
+                zIndex={999}
+                key={`event_displayed_${index}`}
+              />
             ))}
           </>
         )}

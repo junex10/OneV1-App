@@ -28,6 +28,7 @@ const CurrentEventList: React.FC = () => {
 
   const [search, setSearch] = useState("");
   const [events, setEvents] = useState<any>([]);
+  const [popularEvents, setPopularEvents] = useState<any>([]);
   const [user, setUser] = useState<any>(null);
   const [filteredEvents, setFilteredEvents] = useState<any>([]);
 
@@ -38,6 +39,12 @@ const CurrentEventList: React.FC = () => {
 
       const data = await Events.getAllMyEvents({ user_id: getUser.user.id });
       setEvents(data.events);
+
+      const populars = await Events.getAllPopularEvents({
+        user_id: getUser.user.id,
+      });
+      setPopularEvents(populars.events);
+
       setFilteredEvents(data.events);
     })();
   }, []);
@@ -66,11 +73,23 @@ const CurrentEventList: React.FC = () => {
             event.id === data.data.event_id ? { ...event, joined: true } : event
           )
         );
+        setPopularEvents((prevEvents: any[]) =>
+          prevEvents.map((event) =>
+            event.id === data.data.event_id ? { ...event, joined: true } : event
+          )
+        );
       }
     });
     eventBus.on(SocketEvents.EVENTS.USER_LEFT, (data) => {
       if (data) {
         setEvents((prevEvents: any[]) =>
+          prevEvents.map((event) =>
+            event.id === data.data.event_id
+              ? { ...event, joined: false }
+              : event
+          )
+        );
+        setPopularEvents((prevEvents: any[]) =>
           prevEvents.map((event) =>
             event.id === data.data.event_id
               ? { ...event, joined: false }
@@ -116,7 +135,69 @@ const CurrentEventList: React.FC = () => {
           value={search}
           onChangeText={setSearch}
         />
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => router.push("src/event/first-new-event")}
+        >
+          <Ionicons name="add" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
+
+      {/* Popular Events Section */}
+      <Text style={styles.popularTitle}>Popular events</Text>
+      <FlatList
+        data={popularEvents}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 8 }}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.popularCard}
+            onPress={() => {
+              router.push({
+                pathname: "/src/event/current-event",
+                params: { event_id: JSON.stringify(item.id) },
+              });
+            }}
+          >
+            <Image
+              source={{
+                uri: item?.main_pic
+                  ? `${server}storage/${item?.main_pic}`
+                  : item?.cover
+                  ? item.cover
+                  : `${server}img/random_location.jpg`,
+              }}
+              style={styles.popularImage}
+            />
+            <Text style={styles.popularEventTitle} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={styles.popularEventLocation} numberOfLines={1}>
+              {item.address}
+            </Text>
+            <View style={{ width: "100%", alignItems: "center", marginTop: 6 }}>
+              {!item.joined ? (
+                <TouchableOpacity
+                  style={styles.joinBtn}
+                  onPress={() => joinEvent(item.id)}
+                >
+                  <Text style={styles.joinText}>+ Join</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.joinedBtn}
+                  onPress={() => leftEvent(item.id)}
+                >
+                  <Text style={styles.joinedText}>+ Joined</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+
       {filteredEvents.length === 0 && (
         <View style={{ alignItems: "center", marginTop: 48 }}>
           <Text
@@ -249,6 +330,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingHorizontal: 14,
     paddingVertical: 6,
+    position: "relative",
+  },
+  addButton: {
+    marginLeft: 8,
+    backgroundColor: Colors.purple,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   searchInput: {
     flex: 1,
@@ -357,6 +452,54 @@ const styles = StyleSheet.create({
     color: Colors.green,
     fontWeight: "bold",
     fontSize: 15,
+  },
+  popularTitle: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 18,
+    marginLeft: 18,
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  popularCard: {
+    width: 170,
+    height: 190, // Further increased height for more space
+    marginRight: 16,
+    backgroundColor: Colors.blue_dark,
+    borderRadius: 18,
+    overflow: "hidden",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    paddingBottom: 16,
+    paddingTop: 10,
+    paddingHorizontal: 10,
+  },
+  popularImage: {
+    width: "100%",
+    height: 80, // Reduced image height to allow more space for text
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+  },
+  popularEventTitle: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginTop: 8,
+    marginHorizontal: 8,
+    textAlign: "center",
+    minHeight: 22,
+  },
+  popularEventLocation: {
+    color: Colors.gray,
+    fontSize: 13,
+    marginBottom: 6,
+    marginHorizontal: 8,
+    textAlign: "center",
+    minHeight: 18,
   },
 });
 
