@@ -23,6 +23,8 @@ interface SetEventDTO {
 }
 interface GetAllMyEvents {
   user_id: number;
+  latitude: number;
+  longitude: number;
 }
 
 interface GetViewers {

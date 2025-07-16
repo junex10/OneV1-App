@@ -15,6 +15,7 @@ import {
   eventBus,
 } from "../../../resources/utils/global";
 import { Storage } from "../../../resources/utils";
+import { useLocation } from "../../../resources/providers/location";
 import { Events } from "../../../resources/services";
 import { socket } from "../../../resources/providers/socket";
 import Constants from "expo-constants";
@@ -25,6 +26,7 @@ const server = Constants.expoConfig?.extra?.SERVER;
 
 const CurrentEventList: React.FC = () => {
   const router = useRouter();
+  const getLocation: any = useLocation();
 
   const [search, setSearch] = useState("");
   const [events, setEvents] = useState<any>([]);
@@ -37,7 +39,11 @@ const CurrentEventList: React.FC = () => {
       const getUser = await Storage.get("user");
       setUser(getUser);
 
-      const data = await Events.getAllMyEvents({ user_id: getUser.user.id });
+      const data = await Events.getAllMyEvents({
+        user_id: getUser.user.id,
+        latitude: getLocation.coords.latitude,
+        longitude: getLocation.coords.longitude,
+      });
       setEvents(data.events);
 
       const populars = await Events.getAllPopularEvents({

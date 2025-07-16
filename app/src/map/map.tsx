@@ -620,6 +620,7 @@ const Map: React.FC = () => {
                 pinColor={Colors.purple}
                 zIndex={999}
                 key={`event_displayed_${index}`}
+                onPress={() => getEvent(itemPlace)}
               />
             ))}
           </>
@@ -865,18 +866,24 @@ const styles = StyleSheet.create({
   },
   destinationConfirm: {
     position: "absolute",
-    left: 16,
-    right: 16,
-    bottom: 80,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: Colors.blue_dark_2,
-    borderRadius: 16,
-    padding: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    padding: 24,
+    zIndex: 50,
+    flexDirection: "column",
     alignItems: "center",
-    zIndex: 20,
+    minHeight: 120,
+    elevation: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -2 },
   },
   destinationConfirmText: {
     color: Colors.gray,
