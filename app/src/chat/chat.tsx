@@ -21,7 +21,11 @@ import { ChatService } from "../../../resources/services";
 import { useLocalSearchParams } from "expo-router";
 import Constants from "expo-constants";
 import { socket } from "../../../resources/providers/socket";
-import { SocketEvents, eventBus } from "../../../resources/utils/global";
+import {
+  SocketEvents,
+  eventBus,
+  MAX_FILE_SIZE_MB,
+} from "../../../resources/utils/global";
 import moment from "moment";
 import * as FileSystem from "expo-file-system";
 import Video from "react-native-video";
@@ -44,8 +48,6 @@ const Chat: React.FC = () => {
   const [showFileError, setShowFileError] = useState(false);
   const [showFileSizeError, setShowFileSizeError] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
-
-  const MAX_FILE_SIZE_MB = 16;
 
   useEffect(() => {
     (async () => {

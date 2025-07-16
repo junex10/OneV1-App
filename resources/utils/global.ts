@@ -127,3 +127,5 @@ export const getBase64FromUri = async (uri: string) => {
     return null;
   }
 };
+
+export const MAX_FILE_SIZE_MB = 16;
