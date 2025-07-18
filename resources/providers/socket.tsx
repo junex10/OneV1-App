@@ -58,6 +58,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket?.on(SocketEvents.EVENTS.NEW_POST, (data: any) =>
       eventBus.emit(SocketEvents.EVENTS.NEW_POST, data)
     );
+    socket?.on(SocketEvents.EVENTS.NEW_POST_LIKE, (data: any) =>
+      eventBus.emit(SocketEvents.EVENTS.NEW_POST_LIKE, data)
+    );
 
     // We check if there is any event that we're hosting coming out
     /*(async () => {

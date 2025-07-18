@@ -17,20 +17,6 @@ const PIC_SIZE = 56;
 const server = Constants.expoConfig?.extra?.SERVER;
 
 // Dummy data for testing
-const mockChats = [
-  {
-    id: "1",
-    username: "Alice",
-    photo: "https://randomuser.me/api/portraits/women/1.jpg",
-    lastMessage: "Hey, how are you doing today?",
-  },
-  {
-    id: "2",
-    username: "Bob",
-    photo: "https://randomuser.me/api/portraits/men/2.jpg",
-    lastMessage: "Let's catch up soon!",
-  },
-];
 
 const ChatListScreen: React.FC = () => {
   const [chats, setChats] = useState<any>([]);
@@ -66,11 +52,14 @@ const ChatListScreen: React.FC = () => {
 
       <FlatList
         data={chats}
-        keyExtractor={(item) => item.lastLog.id}
-        renderItem={({ item }) => (
+        keyExtractor={(item) =>
+          item?.lastLog?.id?.toString() ?? Math.random().toString()
+        }
+        renderItem={({ item, index }) => (
           <TouchableOpacity
             style={styles.chatItem}
             onPress={() => handlePressChat(item.otherUser)}
+            key={index}
           >
             <Image
               source={{

@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   FlatList,
   Image,
   Dimensions,
@@ -41,6 +40,7 @@ const mainEventPic =
 const CurrentEvent: React.FC = () => {
   const router = useRouter();
   const getLocation: any = useLocation();
+  const postsListRef = useRef<FlatList>(null);
 
   const { event_id } = useLocalSearchParams();
 
@@ -55,6 +55,7 @@ const CurrentEvent: React.FC = () => {
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<any>(null);
   const [modalImageVisible, setModalImageVisible] = useState(false);
+  const [showPostError, setShowPostError] = useState(false);
 
   const [postModalVisible, setPostModalVisible] = useState(false);
   const [postText, setPostText] = useState("");
@@ -111,32 +112,38 @@ const CurrentEvent: React.FC = () => {
     });
 
     eventBus.on(SocketEvents.EVENTS.NEW_POST, (data: any) => {
-      console.log(data, " HI ");
+      setPosts((prev) => [data?.post, ...prev]);
+
+      // Reset values
+      setPostText("");
+      setSelectedMedia(null);
+      setSelectedLocation(null);
+      setLocationAttached(false);
+      setShowFileSizeError(false);
+
+      setTimeout(() => {
+        postsListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }, 100);
+    });
+
+    eventBus.on(SocketEvents.EVENTS.NEW_POST_LIKE, (data: any) => {
+      setPosts((prev) =>
+        prev.map((post) => (post.id === data?.post?.id ? data?.post : post))
+      );
     });
 
     return () => {
       eventBus.off(SocketEvents.EVENTS.NEW_LIKE);
       eventBus.off(SocketEvents.EVENTS.NEW_POST);
+      eventBus.off(SocketEvents.EVENTS.NEW_POST_LIKE);
     };
   }, []);
 
-  useEffect(() => {
-    // Replace this with your API/socket fetch
-    setPosts([
-      {
-        id: "1",
-        user: { name: "Lenny", avatar: null },
-        content: "yo shit popping at burger shot why there so many cops there",
-        createdAt: "a few seconds ago",
-        likes: 0,
-        comments: 0,
-        attachment: null,
-      },
-      // ...more posts
-    ]);
-  }, []);
-
   const handlePost = () => {
+    if (!postText.trim()) {
+      setShowPostError(true);
+      return;
+    }
     let form = {};
     if (selectedLocation) {
       form = {
@@ -163,6 +170,7 @@ const CurrentEvent: React.FC = () => {
       user_id: user?.user?.id,
     };
     socket?.emit(SocketEvents.EVENTS.NEW_POST, form);
+    setPostModalVisible(false);
   };
 
   const handleAttachLocation = () => {
@@ -209,6 +217,14 @@ const CurrentEvent: React.FC = () => {
         Alert.alert("Only images are allowed.");
       }
     }
+  };
+
+  const handleLikePost = (event_post_id: number) => {
+    socket?.emit(SocketEvents.EVENTS.NEW_POST_LIKE, {
+      real_event_id: currentEvent?.id,
+      event_id: event_post_id,
+      user_id: user?.user?.id,
+    });
   };
 
   const handleLike = () => {
@@ -327,6 +343,7 @@ const CurrentEvent: React.FC = () => {
 
         {/** Posts */}
         <FlatList
+          ref={postsListRef}
           data={posts}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => {
@@ -429,6 +446,7 @@ const CurrentEvent: React.FC = () => {
                       alignItems: "center",
                       marginRight: 18,
                     }}
+                    onPress={() => handleLikePost(item.id)}
                   >
                     <Ionicons name="heart-outline" size={18} color="#fff" />
                     <Text style={{ color: "#fff", marginLeft: 4 }}>
@@ -441,7 +459,14 @@ const CurrentEvent: React.FC = () => {
           }}
           contentContainerStyle={{ paddingBottom: 120 }}
           ListEmptyComponent={
-            <Text style={{ color: "#fff", textAlign: "center", marginTop: 32 }}>
+            <Text
+              style={{
+                color: "#fff",
+                textAlign: "center",
+                marginTop: 32,
+                fontSize: 17,
+              }}
+            >
               No posts yet.
             </Text>
           }
@@ -644,12 +669,79 @@ const CurrentEvent: React.FC = () => {
                 onPress={() => setPostModalVisible(false)}
                 style={styles.sendPostCancelBtn}
               >
-                <Text style={styles.sendPostCancelText}>CANCEL</Text>
+                <Text style={styles.sendPostCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handlePost} style={styles.sendPostBtn}>
-                <Text style={styles.sendPostBtnText}>SEND POST</Text>
+                <Text style={styles.sendPostBtnText}>Send post</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/** Error message */}
+      <Modal
+        visible={showPostError}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPostError(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: Colors.blue_dark_2,
+              borderRadius: 16,
+              padding: 28,
+              minWidth: 260,
+              alignItems: "center",
+            }}
+          >
+            <Ionicons
+              name="alert-circle"
+              size={44}
+              color={Colors.purple}
+              style={{ marginBottom: 12 }}
+            />
+            <Text
+              style={{
+                color: "#fff",
+                fontWeight: "bold",
+                fontSize: 18,
+                marginBottom: 8,
+              }}
+            >
+              Post content required
+            </Text>
+            <Text
+              style={{
+                color: Colors.gray,
+                fontSize: 15,
+                marginBottom: 18,
+                textAlign: "center",
+              }}
+            >
+              Please enter some text for your post.
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowPostError(false)}
+              style={{
+                backgroundColor: Colors.purple,
+                borderRadius: 8,
+                paddingVertical: 10,
+                paddingHorizontal: 24,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+                OK
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

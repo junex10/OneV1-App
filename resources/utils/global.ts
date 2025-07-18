@@ -104,6 +104,7 @@ export const SocketEvents = {
     NEW_COMMENT: "event/new-comment",
     NEW_LIKE: "event/new-like",
     NEW_POST: "event/new-post",
+    NEW_POST_LIKE: "event/new-post-like",
   },
 };
 
