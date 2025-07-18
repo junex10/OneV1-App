@@ -10,9 +10,12 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Pressable,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import moment from "moment";
+import Video from "react-native-video";
 import {
   Colors,
   SocketEvents,
@@ -49,6 +52,9 @@ const CurrentEvent: React.FC = () => {
   const [likes, setLikes] = useState(currentEvent?.likes || 0);
   const [status, setStatus] = useState<any>();
   const [posts, setPosts] = useState<any[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
+  const [modalImageVisible, setModalImageVisible] = useState(false);
 
   const [postModalVisible, setPostModalVisible] = useState(false);
   const [postText, setPostText] = useState("");
@@ -81,6 +87,12 @@ const CurrentEvent: React.FC = () => {
         count_comments: true, // We will bring the comments, only the count
       });
       setCountComments(commentData?.comments);
+
+      const eventPost = await Events.getPosts({
+        event_id: event,
+        user_id: getUser.user.id,
+      });
+      setPosts(eventPost?.posts);
 
       socket?.emit(SocketEvents.EVENTS.USER_JOINING, {
         user_id: getUser.user.id,
@@ -317,70 +329,116 @@ const CurrentEvent: React.FC = () => {
         <FlatList
           data={posts}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.feedCard}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Image
-                  source={
-                    item.user.avatar
-                      ? { uri: item.user.avatar }
-                      : {
-                          uri: "https://randomuser.me/api/portraits/men/32.jpg",
-                        }
-                  }
-                  style={styles.feedAvatar}
-                />
-                <View style={{ marginLeft: 10 }}>
-                  <Text style={styles.feedUser}>{item.user.name}</Text>
-                  <Text style={styles.feedTime}>{item.createdAt}</Text>
+          renderItem={({ item }) => {
+            const formattedTime = moment(item?.created_at, [
+              "HH:mm",
+              moment.ISO_8601,
+            ]).format("HH:mm a");
+
+            const isVideo =
+              item?.attachment &&
+              (item?.attachment.endsWith(".mp4") ||
+                item?.attachment.endsWith(".mov") ||
+                item?.attachment.endsWith(".webm") ||
+                item?.attachment.endsWith(".avi"));
+
+            return (
+              <View style={styles.feedCard}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <View style={styles.storyAvatarBorder}>
+                    <Image
+                      source={{
+                        uri: item?.user?.photo
+                          ? `${server}storage/${item?.user?.photo}`
+                          : `${server}img/random_location.jpg`,
+                      }}
+                      style={styles.storyAvatar}
+                    />
+                  </View>
+                  <View style={{ marginLeft: 10 }}>
+                    <Text style={styles.feedUser}>
+                      {item?.user?.person?.username}
+                    </Text>
+                    <Text style={styles.feedTime}>{formattedTime}</Text>
+                  </View>
+                </View>
+                <Text style={styles.feedText}>{item?.content}</Text>
+                {item.attachment && isVideo && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedVideo(`${server}/storage/${item.attachment}`);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Video
+                      source={{ uri: `${server}/storage/${item.attachment}` }}
+                      style={{
+                        width: "100%",
+                        height: 180,
+                        borderRadius: 12,
+                        marginBottom: 10,
+                      }}
+                      paused={true}
+                      resizeMode="cover"
+                      muted
+                    />
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Ionicons name="play-circle" size={48} color="#fff" />
+                    </View>
+                  </TouchableOpacity>
+                )}
+                {item?.attachment && !isVideo && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedImage(`${server}/storage/${item?.attachment}`);
+                      setModalImageVisible(true);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Image
+                      source={{ uri: `${server}/storage/${item?.attachment}` }}
+                      style={{
+                        width: "100%",
+                        height: 180,
+                        borderRadius: 12,
+                        marginBottom: 10,
+                      }}
+                    />
+                  </TouchableOpacity>
+                )}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginTop: 6,
+                  }}
+                >
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginRight: 18,
+                    }}
+                  >
+                    <Ionicons name="heart-outline" size={18} color="#fff" />
+                    <Text style={{ color: "#fff", marginLeft: 4 }}>
+                      {item?.likes}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-              <Text style={styles.feedText}>{item.content}</Text>
-              {item.attachment && (
-                <Image
-                  source={{ uri: item.attachment }}
-                  style={{
-                    width: "100%",
-                    height: 180,
-                    borderRadius: 12,
-                    marginBottom: 10,
-                  }}
-                />
-              )}
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginTop: 6,
-                }}
-              >
-                <TouchableOpacity
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginRight: 18,
-                  }}
-                >
-                  <Ionicons name="heart-outline" size={18} color="#fff" />
-                  <Text style={{ color: "#fff", marginLeft: 4 }}>
-                    {item.likes}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginRight: 18,
-                  }}
-                >
-                  <Ionicons name="chatbubble-outline" size={18} color="#fff" />
-                  <Text style={{ color: "#fff", marginLeft: 4 }}>
-                    {item.comments}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
+            );
+          }}
           contentContainerStyle={{ paddingBottom: 120 }}
           ListEmptyComponent={
             <Text style={{ color: "#fff", textAlign: "center", marginTop: 32 }}>
@@ -426,6 +484,57 @@ const CurrentEvent: React.FC = () => {
               />
             </View>
           </View>
+        </Modal>
+
+        {/** Bigger video */}
+        <Modal
+          visible={!!selectedVideo}
+          transparent={true}
+          onRequestClose={() => setSelectedVideo(null)}
+        >
+          <Pressable
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.9)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            onPress={() => setSelectedVideo(null)}
+          >
+            {selectedVideo && (
+              <Video
+                source={{ uri: selectedVideo }}
+                style={{ width: "90%", height: "70%", borderRadius: 12 }}
+                resizeMode="contain"
+                controls
+                paused={false}
+              />
+            )}
+          </Pressable>
+        </Modal>
+
+        {/**  Bigger picture  */}
+        <Modal
+          visible={modalImageVisible}
+          transparent={true}
+          onRequestClose={() => setModalImageVisible(false)}
+        >
+          <Pressable
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.9)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            onPress={() => setModalImageVisible(false)}
+          >
+            {selectedImage && (
+              <Image
+                source={{ uri: selectedImage }}
+                style={{ width: "90%", height: "70%", resizeMode: "contain" }}
+              />
+            )}
+          </Pressable>
         </Modal>
       </View>
       <View style={styles.fabNavContainer}>
@@ -715,6 +824,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 18,
     width: 60,
+    marginBottom: 20,
   },
   storyAvatarBorder: {
     borderWidth: 2,

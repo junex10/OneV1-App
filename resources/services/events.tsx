@@ -39,6 +39,10 @@ interface GetCommentsDTO {
 interface GetAllPopularEvents {
   user_id?: number;
 }
+interface GetPostsDTO {
+  user_id?: number;
+  event_id?: number;
+}
 
 const Events = {
   getEvents: async (coordinates: Coordinates) => {
@@ -139,6 +143,15 @@ const Events = {
   getComments: async (request: GetCommentsDTO) => {
     try {
       const response = await api.post(`${API}app/events/getComments`, request);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching places:", error);
+      throw error;
+    }
+  },
+  getPosts: async (request: GetPostsDTO) => {
+    try {
+      const response = await api.post(`${API}app/events/getPosts`, request);
       return response.data;
     } catch (error) {
       console.error("Error fetching places:", error);
