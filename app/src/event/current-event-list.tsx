@@ -204,7 +204,7 @@ const CurrentEventList: React.FC = () => {
         )}
       />
 
-      {filteredEvents.length === 0 && (
+      {filteredEvents?.length === 0 && (
         <View style={{ alignItems: "center", marginTop: 48 }}>
           <Text
             style={{ color: Colors.gray, fontSize: 17, textAlign: "center" }}

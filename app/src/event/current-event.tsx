@@ -48,6 +48,7 @@ const CurrentEvent: React.FC = () => {
   const [countComments, setCountComments] = useState<number>(0);
   const [likes, setLikes] = useState(currentEvent?.likes || 0);
   const [status, setStatus] = useState<any>();
+  const [posts, setPosts] = useState<any[]>([]);
 
   const [postModalVisible, setPostModalVisible] = useState(false);
   const [postText, setPostText] = useState("");
@@ -97,10 +98,60 @@ const CurrentEvent: React.FC = () => {
       setLikes(data?.comment?.likes);
     });
 
+    eventBus.on(SocketEvents.EVENTS.NEW_POST, (data: any) => {
+      console.log(data, " HI ");
+    });
+
     return () => {
       eventBus.off(SocketEvents.EVENTS.NEW_LIKE);
+      eventBus.off(SocketEvents.EVENTS.NEW_POST);
     };
   }, []);
+
+  useEffect(() => {
+    // Replace this with your API/socket fetch
+    setPosts([
+      {
+        id: "1",
+        user: { name: "Lenny", avatar: null },
+        content: "yo shit popping at burger shot why there so many cops there",
+        createdAt: "a few seconds ago",
+        likes: 0,
+        comments: 0,
+        attachment: null,
+      },
+      // ...more posts
+    ]);
+  }, []);
+
+  const handlePost = () => {
+    let form = {};
+    if (selectedLocation) {
+      form = {
+        ...form,
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+      };
+    }
+    if (postText.length > 0) {
+      form = {
+        ...form,
+        content: postText,
+      };
+    }
+    if (selectedMedia) {
+      form = {
+        ...form,
+        attachment: selectedMedia,
+      };
+    }
+    form = {
+      ...form,
+      event_id: currentEvent?.id,
+      user_id: user?.user?.id,
+    };
+    socket?.emit(SocketEvents.EVENTS.NEW_POST, form);
+  };
 
   const handleAttachLocation = () => {
     setSelectedLocation({
@@ -171,9 +222,13 @@ const CurrentEvent: React.FC = () => {
         onClose={() => setShowFileSizeError(false)}
         timeout={3000}
       />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{ paddingBottom: 120 }}
+      <View
+        style={[
+          styles.container,
+          {
+            paddingBottom: 120,
+          },
+        ]}
       >
         {/* Main Event Picture with Close Button Overlay */}
         <View style={{ position: "relative" }}>
@@ -258,6 +313,82 @@ const CurrentEvent: React.FC = () => {
           )}
         />
 
+        {/** Posts */}
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.feedCard}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  source={
+                    item.user.avatar
+                      ? { uri: item.user.avatar }
+                      : {
+                          uri: "https://randomuser.me/api/portraits/men/32.jpg",
+                        }
+                  }
+                  style={styles.feedAvatar}
+                />
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={styles.feedUser}>{item.user.name}</Text>
+                  <Text style={styles.feedTime}>{item.createdAt}</Text>
+                </View>
+              </View>
+              <Text style={styles.feedText}>{item.content}</Text>
+              {item.attachment && (
+                <Image
+                  source={{ uri: item.attachment }}
+                  style={{
+                    width: "100%",
+                    height: 180,
+                    borderRadius: 12,
+                    marginBottom: 10,
+                  }}
+                />
+              )}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginTop: 6,
+                }}
+              >
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginRight: 18,
+                  }}
+                >
+                  <Ionicons name="heart-outline" size={18} color="#fff" />
+                  <Text style={{ color: "#fff", marginLeft: 4 }}>
+                    {item.likes}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginRight: 18,
+                  }}
+                >
+                  <Ionicons name="chatbubble-outline" size={18} color="#fff" />
+                  <Text style={{ color: "#fff", marginLeft: 4 }}>
+                    {item.comments}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+          contentContainerStyle={{ paddingBottom: 120 }}
+          ListEmptyComponent={
+            <Text style={{ color: "#fff", textAlign: "center", marginTop: 32 }}>
+              No posts yet.
+            </Text>
+          }
+        />
+
         {/* View All Modal */}
         <Modal
           visible={viewAllVisible}
@@ -296,7 +427,7 @@ const CurrentEvent: React.FC = () => {
             </View>
           </View>
         </Modal>
-      </ScrollView>
+      </View>
       <View style={styles.fabNavContainer}>
         <TouchableOpacity
           style={styles.fabNavItem}
@@ -406,7 +537,7 @@ const CurrentEvent: React.FC = () => {
               >
                 <Text style={styles.sendPostCancelText}>CANCEL</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => {}} style={styles.sendPostBtn}>
+              <TouchableOpacity onPress={handlePost} style={styles.sendPostBtn}>
                 <Text style={styles.sendPostBtnText}>SEND POST</Text>
               </TouchableOpacity>
             </View>

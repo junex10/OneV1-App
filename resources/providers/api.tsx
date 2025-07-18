@@ -54,7 +54,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({
       async (response) => {
         setSpinner(false);
         if (response?.status === 204) {
-          //await Storage.remove("user");
+          await Storage.remove("user");
           setSessionExpired(true);
           setShouldRedirect(true);
         }
