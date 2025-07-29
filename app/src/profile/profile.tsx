@@ -19,6 +19,8 @@ import Constants from "expo-constants";
 import { ProfileService } from "./../../../resources/services";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import { socket } from "../../../resources/providers/socket";
+import { SocketEvents } from "../../../resources/utils/global";
 
 const PROFILE_PIC_SIZE = 80;
 const { width, height } = Dimensions.get("window");
@@ -141,9 +143,12 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = (user_id: number) => {
     Storage.remove("user");
     Storage.remove("current_event");
+    socket?.emit(SocketEvents.USER_LEFT_SOCKET, {
+      user_id,
+    });
     router.replace("/");
   };
 
@@ -191,7 +196,7 @@ const Profile: React.FC = () => {
         title="Logout"
         message="Are you sure you want to logout?"
         onClose={() => setShowLogoutModal(false)}
-        onConfirm={handleLogout}
+        onConfirm={() => handleLogout(user?.user?.id)}
         confirmText="Logout"
         cancelText="Cancel"
       />

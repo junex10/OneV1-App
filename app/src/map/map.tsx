@@ -60,6 +60,7 @@ const Map: React.FC = () => {
   const [searchEditable, setSearchEditable] = useState<boolean>(true); // will control the editable of the search bar
   const [newEventCreated, setNewEventCreated] = useState<boolean>(false); // When we create a new event, we'll skip the left event thing
   const [routeInfo, setRouteInfo] = useState<any>(null);
+  const [notificationCount, setNotificationCount] = useState<number>(0);
 
   const mapRef = useRef<MapView>(null);
 
@@ -313,6 +314,25 @@ const Map: React.FC = () => {
         onClose={() => setEventCreated(false)}
         timeout={4000}
       />
+
+      {/* Notification Icon */}
+      <View style={styles.notificationIconContainer}>
+        <TouchableOpacity
+          onPress={() => router.push("/src/notifications/notifications")}
+          activeOpacity={0.7}
+        >
+          <View style={styles.notificationCircle}>
+            <Ionicons name="notifications-outline" size={28} color="#fff" />
+            {notificationCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>
+                  {notificationCount > 9 ? "9+" : notificationCount}
+                </Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      </View>
 
       {/**  Search One */}
       {/** Hiden it when we are on a route */}
@@ -1055,6 +1075,42 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: -2 },
+  },
+  notificationIconContainer: {
+    position: "absolute",
+    top: 26,
+    right: 24,
+    zIndex: 100,
+    marginBottom: 20,
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.blue_dark_2,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 5,
+    borderWidth: 2,
+    borderColor: "#222B36",
+  },
+  notificationBadgeText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 13,
+    textAlign: "center",
+  },
+  notificationCircle: {
+    backgroundColor: Colors.purple,
+    borderRadius: 24,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
   },
 });
 

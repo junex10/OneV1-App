@@ -13,6 +13,8 @@ import { Colors } from "./../../../resources/utils/global";
 import { Ionicons } from "@expo/vector-icons";
 import { Auth } from "../../../resources/services";
 import { Storage, CustomModal } from "../../../resources/utils";
+import { socket } from "../../../resources/providers/socket";
+import { SocketEvents } from "../../../resources/utils/global";
 
 const Login: React.FC = () => {
   const router = useRouter();
@@ -43,6 +45,9 @@ const Login: React.FC = () => {
     });
     if (user?.data) {
       Storage.set("user", user?.data);
+      socket?.emit(SocketEvents.USER_SOCKET, {
+        user_id: user?.data?.user?.id,
+      });
       router.replace("/src/map/map");
     } else {
       setShowErrorModal(true);

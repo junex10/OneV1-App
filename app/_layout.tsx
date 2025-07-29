@@ -6,6 +6,7 @@ const MAP = "src/map/";
 const PROFILE = "src/profile/";
 const CHAT = "src/chat/";
 const EVENT = "src/event/";
+const NOTIF = "src/notifications/";
 
 export default function RootLayout() {
   return (
@@ -110,6 +111,13 @@ export default function RootLayout() {
         <Stack.Screen
           name={`${EVENT}current-event-list`}
           options={{ title: "Current event chat", headerShown: false }}
+        />
+
+        {/**  Notifications */}
+
+        <Stack.Screen
+          name={`${NOTIF}notifications`}
+          options={{ title: "Notifications", headerShown: false }}
         />
       </Stack>
     </Providers>

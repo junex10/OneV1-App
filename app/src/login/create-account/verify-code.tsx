@@ -14,6 +14,8 @@ import { Auth } from "../../../../resources/services";
 import { Storage } from "../../../../resources/utils";
 import { Ionicons } from "@expo/vector-icons";
 import CustomModal from "../../../../resources/utils/models";
+import { socket } from "../../../../resources/providers/socket";
+import { SocketEvents } from "../../../../resources/utils/global";
 
 const CODE_LENGTH = 6;
 
@@ -49,6 +51,9 @@ const VerifyCode: React.FC = () => {
     const data = await Auth.verifyUser(Number(code));
     if (data?.message) {
       Storage.set("user", getUser);
+      socket?.emit(SocketEvents.USER_SOCKET, {
+        user_id: getUser?.user?.id,
+      });
       router.replace("/src/map/map");
     } else {
       setError(true);
