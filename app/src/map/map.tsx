@@ -23,8 +23,10 @@ import {
   mapCustomStyle,
   Colors,
   SocketEvents,
+  eventBus,
 } from "./../../../resources/utils/global";
 import { socket } from "../../../resources/providers/socket";
+import { Notifications } from "./../../../resources/services";
 import Constants from "expo-constants";
 
 const { width, height } = Dimensions.get("window");
@@ -276,6 +278,33 @@ const Map: React.FC = () => {
     }
   }, [getLocation?.coords, hasArrived, currentEvent]);
 
+  // listeners
+
+  useEffect(() => {
+    const handleNotificationsCount = (data: any) => {
+      setNotificationCount(data?.count);
+    };
+
+    eventBus.on(SocketEvents.NOTIFICATIONS.READ, handleNotificationsCount);
+
+    return () => {
+      eventBus.off(SocketEvents.NOTIFICATIONS.READ, handleNotificationsCount);
+    };
+  }, [notificationCount]);
+
+  //We load the notifications count
+  useEffect(() => {
+    (async () => {
+      const getUser = await Storage.get("user");
+
+      const notificationsCount = await Notifications.getCountNotifications({
+        user_id: getUser.user?.id,
+      });
+
+      setNotificationCount(notificationsCount?.notifications?.count);
+    })();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/** LoadingInitialModel */}
@@ -316,23 +345,25 @@ const Map: React.FC = () => {
       />
 
       {/* Notification Icon */}
-      <View style={styles.notificationIconContainer}>
-        <TouchableOpacity
-          onPress={() => router.push("/src/notifications/notifications")}
-          activeOpacity={0.7}
-        >
-          <View style={styles.notificationCircle}>
-            <Ionicons name="notifications-outline" size={28} color="#fff" />
-            {notificationCount > 0 && (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>
-                  {notificationCount > 9 ? "9+" : notificationCount}
-                </Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-      </View>
+      {user && (
+        <View style={styles.notificationIconContainer}>
+          <TouchableOpacity
+            onPress={() => router.push("/src/notifications/notifications")}
+            activeOpacity={0.7}
+          >
+            <View style={styles.notificationCircle}>
+              <Ionicons name="notifications-outline" size={28} color="#fff" />
+              {notificationCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {notificationCount > 9 ? "9+" : notificationCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/**  Search One */}
       {/** Hiden it when we are on a route */}

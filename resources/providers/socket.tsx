@@ -62,6 +62,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       eventBus.emit(SocketEvents.EVENTS.NEW_POST_LIKE, data)
     );
 
+    socket?.on(SocketEvents.NOTIFICATIONS.READ, (data: any) =>
+      eventBus.emit(SocketEvents.NOTIFICATIONS.READ, data)
+    );
+
     // We check if there is any event that we're hosting coming out
     /*(async () => {
       const user = await Storage.get("user");

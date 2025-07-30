@@ -8,10 +8,12 @@ import {
   SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "./../../../resources/utils/global";
+import { Colors, SocketEvents } from "./../../../resources/utils/global";
 import { useRouter } from "expo-router";
 import { Notifications } from "../../../resources/services";
 import { Storage } from "../../../resources/utils";
+import { socket } from "../../../resources/providers/socket";
+
 import moment from "moment";
 
 const NOTIFICATIONS_STATUS = {
@@ -33,6 +35,16 @@ const NotificationsScreen: React.FC = () => {
       });
 
       setNotifications(notifications?.notifications);
+
+      setTimeout(async () => {
+        await Notifications.readNotifications({
+          user_id: getUser?.user?.id,
+        });
+
+        socket?.emit(SocketEvents.NOTIFICATIONS.READ, {
+          user_id: getUser?.user?.id,
+        });
+      }, 2000);
     };
 
     fetchNotifications();

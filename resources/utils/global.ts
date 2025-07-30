@@ -108,6 +108,9 @@ export const SocketEvents = {
     NEW_POST: "event/new-post",
     NEW_POST_LIKE: "event/new-post-like",
   },
+  NOTIFICATIONS: {
+    READ: "notifications/read-notifications",
+  },
 };
 
 export const EventStatus = {
