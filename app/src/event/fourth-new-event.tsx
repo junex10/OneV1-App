@@ -22,6 +22,7 @@ import {
 } from "../../../resources/utils/global";
 import { Events } from "../../../resources/services";
 import { CustomModal, Storage } from "../../../resources/utils";
+import { socket } from "../../../resources/providers/socket";
 
 const DEFAULT_LATITUDE = 37.7749;
 const DEFAULT_LONGITUDE = -122.4194;
@@ -60,6 +61,11 @@ const FourthNewEvent: React.FC = () => {
 
     try {
       const data = await Events.setEvent(formData);
+
+      socket?.emit(SocketEvents.NOTIFICATIONS.NEW_EVENT, {
+        sender_id: user.user.id,
+      });
+
       await Storage.set("current_event", data);
       router.replace("/src/map/map");
     } catch (e) {

@@ -101,6 +101,19 @@ const Chat: React.FC = () => {
       other_user_id: friendData?.id,
     });
 
+    // We send notification to the person that we're sending message
+
+    const messageToSend =
+      typeof input === "string" ? input.slice(0, 20) : "New message";
+
+    socket?.emit(SocketEvents.NOTIFICATIONS.NEW_MESSAGE, {
+      sender_id: user?.user?.id,
+      receiver_id: friendData?.id,
+      /*sender_id: 4,
+      receiver_id: 4, TESTING */
+      message: messageToSend,
+    });
+
     setInput("");
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });

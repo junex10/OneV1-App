@@ -10,6 +10,7 @@ import {
   Image,
   Dimensions,
   FlatList,
+  Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
@@ -63,6 +64,15 @@ const Map: React.FC = () => {
   const [newEventCreated, setNewEventCreated] = useState<boolean>(false); // When we create a new event, we'll skip the left event thing
   const [routeInfo, setRouteInfo] = useState<any>(null);
   const [notificationCount, setNotificationCount] = useState<number>(0);
+
+  const [popupVisible, setPopupVisible] = useState(false); // Popup new message notification
+  const [popupData, setPopupData] = useState<{
+    title: string;
+    message: string;
+  } | null>(null); // Popup new message notification
+
+  // Animation value for popup opacity and translateY
+  const popupAnim = useRef(new Animated.Value(1)).current;
 
   const mapRef = useRef<MapView>(null);
 
@@ -285,12 +295,53 @@ const Map: React.FC = () => {
       setNotificationCount(data?.count);
     };
 
+    // Show popup with animation -- New message notification popup
+    const handleNewMessagePopup = (data: any) => {
+      setPopupData({
+        title: data?.title || "New Message",
+        message: data?.message || "",
+      });
+      setPopupVisible(true);
+      popupAnim.setValue(1);
+      setTimeout(() => {
+        Animated.timing(popupAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => setPopupVisible(false));
+      }, 3500);
+    };
+
+    // We get new notification so we update the count
+
+    const handleNewNotificationCount = (data: any) => {
+      setNotificationCount(data.length);
+      handleNewMessagePopup(data); // We pop up notification container
+    };
+
     eventBus.on(SocketEvents.NOTIFICATIONS.READ, handleNotificationsCount);
+    eventBus.on(
+      SocketEvents.NOTIFICATIONS.NEW_MESSAGE,
+      handleNewNotificationCount
+    );
 
     return () => {
       eventBus.off(SocketEvents.NOTIFICATIONS.READ, handleNotificationsCount);
+      eventBus.off(
+        SocketEvents.NOTIFICATIONS.NEW_MESSAGE,
+        handleNewNotificationCount
+      );
     };
   }, [notificationCount]);
+
+  // Hide popup immediately on press with animation -- new notification container
+  const handlePopupPress = () => {
+    Animated.timing(popupAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setPopupVisible(false));
+  };
 
   //We load the notifications count
   useEffect(() => {
@@ -343,6 +394,35 @@ const Map: React.FC = () => {
         onClose={() => setEventCreated(false)}
         timeout={4000}
       />
+
+      {/**  We adding pop up notification */}
+      {popupVisible && popupData && (
+        <Animated.View
+          style={[
+            styles.topPopupContainer,
+            {
+              opacity: popupAnim,
+              transform: [
+                {
+                  translateY: popupAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-40, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <TouchableOpacity activeOpacity={0.9} onPress={handlePopupPress}>
+            <View style={styles.topPopupInner}>
+              <Text style={styles.topPopupTitle}>{popupData.title}</Text>
+              <Text style={styles.topPopupMessage} numberOfLines={2}>
+                {popupData.message}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
 
       {/* Notification Icon */}
       {user && (
@@ -1142,6 +1222,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
+  },
+  topPopupContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    paddingTop: 36,
+    paddingHorizontal: 16,
+  },
+  topPopupInner: {
+    backgroundColor: Colors.blue_dark_2,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 8,
+  },
+  topPopupTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: Colors.purple,
+    marginBottom: 4,
+  },
+  topPopupMessage: {
+    color: Colors.gray,
+    fontSize: 14,
   },
 });
 

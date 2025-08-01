@@ -8,7 +8,11 @@ import {
   SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, SocketEvents } from "./../../../resources/utils/global";
+import {
+  Colors,
+  eventBus,
+  SocketEvents,
+} from "./../../../resources/utils/global";
 import { useRouter } from "expo-router";
 import { Notifications } from "../../../resources/services";
 import { Storage } from "../../../resources/utils";
@@ -37,18 +41,31 @@ const NotificationsScreen: React.FC = () => {
       setNotifications(notifications?.notifications);
 
       setTimeout(async () => {
-        await Notifications.readNotifications({
-          user_id: getUser?.user?.id,
-        });
-
         socket?.emit(SocketEvents.NOTIFICATIONS.READ, {
           user_id: getUser?.user?.id,
         });
-      }, 2000);
+      }, 1000);
     };
 
     fetchNotifications();
   }, []);
+
+  useEffect(() => {
+    // We get new notification so we update
+
+    const handleNewNotification = (data: any) => {
+      setNotifications(data);
+    };
+
+    eventBus.on(SocketEvents.NOTIFICATIONS.NEW_MESSAGE, handleNewNotification);
+
+    return () => {
+      eventBus.off(
+        SocketEvents.NOTIFICATIONS.NEW_MESSAGE,
+        handleNewNotification
+      );
+    };
+  }, [notifications]);
 
   const renderItem = ({ item }: any) => {
     const isNew = item.status !== NOTIFICATIONS_STATUS.READED;

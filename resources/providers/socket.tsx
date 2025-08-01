@@ -27,6 +27,14 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     socketRef.current = socket;
 
+    // Reconnect logic: on connect, join user group
+    socket?.on("connect", async () => {
+      const user = await Storage.get("user");
+      if (user?.user?.id) {
+        socket.emit(SocketEvents.USER_SOCKET, { user_id: user.user.id });
+      }
+    });
+
     // Listeners
     socket?.on(SocketEvents.NEW_MESSAGE, (data: any) =>
       eventBus.emit(SocketEvents.NEW_MESSAGE, data)
@@ -64,6 +72,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
     socket?.on(SocketEvents.NOTIFICATIONS.READ, (data: any) =>
       eventBus.emit(SocketEvents.NOTIFICATIONS.READ, data)
+    );
+    socket?.on(SocketEvents.NOTIFICATIONS.NEW_MESSAGE, (data: any) =>
+      eventBus.emit(SocketEvents.NOTIFICATIONS.NEW_MESSAGE, data)
     );
 
     // We check if there is any event that we're hosting coming out
