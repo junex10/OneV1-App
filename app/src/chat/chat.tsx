@@ -109,8 +109,8 @@ const Chat: React.FC = () => {
     socket?.emit(SocketEvents.NOTIFICATIONS.NEW_MESSAGE, {
       sender_id: user?.user?.id,
       receiver_id: friendData?.id,
-      /*sender_id: 4,
-      receiver_id: 4, TESTING */
+      /* sender_id: 4,
+      receiver_id: 4,*/
       message: messageToSend,
     });
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -33,6 +34,15 @@ const CurrentEventList: React.FC = () => {
   const [popularEvents, setPopularEvents] = useState<any>([]);
   const [user, setUser] = useState<any>(null);
   const [filteredEvents, setFilteredEvents] = useState<any>([]);
+
+  const [popupVisible, setPopupVisible] = useState(false); // Popup new message notification
+  const [popupData, setPopupData] = useState<{
+    title: string;
+    message: string;
+  } | null>(null); // Popup new message notification
+
+  // Animation value for popup opacity and translateY
+  const popupAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     (async () => {
@@ -110,6 +120,52 @@ const CurrentEventList: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    // We get new notification so we update the count
+
+    const handleNewNotificationMessage = (data: any) => {
+      handleNewMessagePopup(data); // We pop up notification container
+    };
+
+    // Show popup with animation -- New message notification popup
+    const handleNewMessagePopup = (data: any) => {
+      setPopupData({
+        title: data?.title || "New Message",
+        message: data?.message || "",
+      });
+      setPopupVisible(true);
+      popupAnim.setValue(1);
+      setTimeout(() => {
+        Animated.timing(popupAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => setPopupVisible(false));
+      }, 3500);
+    };
+
+    eventBus.on(
+      SocketEvents.NOTIFICATIONS.NEW_MESSAGE,
+      handleNewNotificationMessage
+    );
+
+    return () => {
+      eventBus.off(
+        SocketEvents.NOTIFICATIONS.NEW_MESSAGE,
+        handleNewNotificationMessage
+      );
+    };
+  }, []);
+
+  // Hide popup immediately on press with animation -- new notification container
+  const handlePopupPress = () => {
+    Animated.timing(popupAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setPopupVisible(false));
+  };
+
   const joinEvent = (event_id: number) => {
     socket?.emit(SocketEvents.EVENTS.USER_JOINING, {
       user_id: user?.user.id,
@@ -126,6 +182,35 @@ const CurrentEventList: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {/**  We adding pop up notification */}
+      {popupVisible && popupData && (
+        <Animated.View
+          style={[
+            styles.topPopupContainer,
+            {
+              opacity: popupAnim,
+              transform: [
+                {
+                  translateY: popupAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-40, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <TouchableOpacity activeOpacity={0.9} onPress={handlePopupPress}>
+            <View style={styles.topPopupInner}>
+              <Text style={styles.topPopupTitle}>{popupData.title}</Text>
+              <Text style={styles.topPopupMessage} numberOfLines={2}>
+                {popupData.message}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
+
       {/* Search Bar */}
       <View style={styles.searchBarContainer}>
         <Ionicons
@@ -150,59 +235,65 @@ const CurrentEventList: React.FC = () => {
       </View>
 
       {/* Popular Events Section */}
-      <Text style={styles.popularTitle}>Popular events</Text>
-      <FlatList
-        data={popularEvents}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 8 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.popularCard}
-            onPress={() => {
-              router.push({
-                pathname: "/src/event/current-event",
-                params: { event_id: JSON.stringify(item.id) },
-              });
-            }}
-          >
-            <Image
-              source={{
-                uri: item?.main_pic
-                  ? `${server}storage/${item?.main_pic}`
-                  : item?.cover
-                  ? item.cover
-                  : `${server}img/random_location.jpg`,
-              }}
-              style={styles.popularImage}
-            />
-            <Text style={styles.popularEventTitle} numberOfLines={1}>
-              {item.title}
-            </Text>
-            <Text style={styles.popularEventLocation} numberOfLines={1}>
-              {item.address}
-            </Text>
-            <View style={{ width: "100%", alignItems: "center", marginTop: 6 }}>
-              {!item.joined ? (
-                <TouchableOpacity
-                  style={styles.joinBtn}
-                  onPress={() => joinEvent(item.id)}
+      {popularEvents?.length > 0 && (
+        <>
+          <Text style={styles.popularTitle}>Popular events</Text>
+          <FlatList
+            data={popularEvents}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 8 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.popularCard}
+                onPress={() => {
+                  router.push({
+                    pathname: "/src/event/current-event",
+                    params: { event_id: JSON.stringify(item.id) },
+                  });
+                }}
+              >
+                <Image
+                  source={{
+                    uri: item?.main_pic
+                      ? `${server}storage/${item?.main_pic}`
+                      : item?.cover
+                      ? item.cover
+                      : `${server}img/random_location.jpg`,
+                  }}
+                  style={styles.popularImage}
+                />
+                <Text style={styles.popularEventTitle} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={styles.popularEventLocation} numberOfLines={1}>
+                  {item.address}
+                </Text>
+                <View
+                  style={{ width: "100%", alignItems: "center", marginTop: 6 }}
                 >
-                  <Text style={styles.joinText}>+ Join</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.joinedBtn}
-                  onPress={() => leftEvent(item.id)}
-                >
-                  <Text style={styles.joinedText}>+ Joined</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+                  {!item.joined ? (
+                    <TouchableOpacity
+                      style={styles.joinBtn}
+                      onPress={() => joinEvent(item.id)}
+                    >
+                      <Text style={styles.joinText}>+ Join</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.joinedBtn}
+                      onPress={() => leftEvent(item.id)}
+                    >
+                      <Text style={styles.joinedText}>+ Joined</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        </>
+      )}
 
       {filteredEvents?.length === 0 && (
         <View style={{ alignItems: "center", marginTop: 48 }}>
@@ -506,6 +597,35 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     textAlign: "center",
     minHeight: 18,
+  },
+  topPopupContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    paddingTop: 36,
+    paddingHorizontal: 16,
+  },
+  topPopupInner: {
+    backgroundColor: Colors.blue_dark_2,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 8,
+  },
+  topPopupTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: Colors.purple,
+    marginBottom: 4,
+  },
+  topPopupMessage: {
+    color: Colors.gray,
+    fontSize: 14,
   },
 });
 
