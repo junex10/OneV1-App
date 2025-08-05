@@ -27,6 +27,39 @@ import moment from "moment";
 const { width, height } = Dimensions.get("window");
 const server = Constants.expoConfig?.extra?.SERVER;
 
+const fakeFriends = [
+  {
+    id: 1,
+    name: "Bianca Albert",
+    email: "bianca.albert@example.com",
+    photo: `${server}img/random_location.jpg`,
+  },
+  {
+    id: 2,
+    name: "Victor Hansen",
+    email: "victor.hansen@example.com",
+    photo: `${server}img/random_location.jpg`,
+  },
+  {
+    id: 3,
+    name: "Raphaël Andre",
+    email: "raphael.andre@example.com",
+    photo: `${server}img/random_location.jpg`,
+  },
+  {
+    id: 4,
+    name: "Imogen Hobbelink",
+    email: "imogen.hobbelink@example.com",
+    photo: `${server}img/random_location.jpg`,
+  },
+  {
+    id: 5,
+    name: "Lisa Garnier",
+    email: "lisa.garnier@example.com",
+    photo: `${server}img/random_location.jpg`,
+  },
+];
+
 const CurrentEventChat: React.FC = () => {
   const router = useRouter();
   const { current_event } = useLocalSearchParams();
@@ -39,6 +72,8 @@ const CurrentEventChat: React.FC = () => {
   const [backgroundPic, setBackgroundPic] = useState<any>();
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<any>();
+  const [showFriendsModal, setShowFriendsModal] = useState(false);
+  const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
 
   const [popupVisible, setPopupVisible] = useState(false); // Popup new message notification
   const [popupData, setPopupData] = useState<{
@@ -230,12 +265,113 @@ const CurrentEventChat: React.FC = () => {
         <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
+
+        {/* Share Button */}
+        <TouchableOpacity
+          style={styles.closeBtn}
+          onPress={() => setShowFriendsModal(true)}
+        >
+          <Ionicons name="share-social-outline" size={18} color="#fff" />
+        </TouchableOpacity>
       </View>
 
-      {/* Share Button */}
-      {/*<TouchableOpacity style={styles.shareBtn}>
-        <Text style={styles.shareBtnText}>Share with Friend</Text>
-      </TouchableOpacity>*/}
+      {/*Friends list for sharing */}
+      {showFriendsModal && (
+        <View style={styles.friendsModalOverlay}>
+          <View style={styles.friendsModal}>
+            <Text style={styles.friendsModalTitle}>Friends</Text>
+            <TouchableOpacity
+              style={styles.selectAllBtn}
+              onPress={() => {
+                if (selectedFriends.length === fakeFriends.length) {
+                  setSelectedFriends([]); // Unselect all
+                } else {
+                  setSelectedFriends(fakeFriends.map((f) => f.id)); // Select all
+                }
+              }}
+            >
+              <Text style={{ color: Colors.purple, fontWeight: "bold" }}>
+                {selectedFriends.length === fakeFriends.length
+                  ? "Unselect All"
+                  : "Select All"}
+              </Text>
+            </TouchableOpacity>
+            <FlatList
+              data={fakeFriends}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => {
+                const isSelected = selectedFriends.includes(item.id);
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.friendRow,
+                      isSelected && styles.friendRowSelected,
+                    ]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      setSelectedFriends((prev) =>
+                        prev.includes(item.id)
+                          ? prev.filter((id) => id !== item.id)
+                          : [...prev, item.id]
+                      );
+                    }}
+                  >
+                    <Image
+                      source={{ uri: item.photo }}
+                      style={[
+                        styles.friendAvatar,
+                        isSelected && styles.friendAvatarSelected,
+                      ]}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={[
+                          styles.friendName,
+                          isSelected && styles.friendNameSelected,
+                        ]}
+                      >
+                        {item.name}
+                      </Text>
+                      <Text style={styles.friendEmail}>{item.email}</Text>
+                    </View>
+                    {isSelected && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={22}
+                        color={Colors.purple}
+                        style={{ marginLeft: 8 }}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                marginTop: 16,
+                gap: 12,
+              }}
+            >
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setShowFriendsModal(false)}
+              >
+                <Text style={styles.modalCancelText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalSendBtn}
+                onPress={() => {
+                  // Add send functionality here later
+                }}
+              >
+                <Text style={styles.modalSendText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Comments */}
       <FlatList
@@ -497,6 +633,96 @@ const styles = StyleSheet.create({
   topPopupMessage: {
     color: Colors.gray,
     fontSize: 14,
+  },
+  friendsModalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(24,31,42,0.65)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  friendsModal: {
+    width: "88%",
+    maxHeight: "70%",
+    backgroundColor: Colors.blue_dark_2,
+    borderRadius: 18,
+    padding: 18,
+    elevation: 12,
+  },
+  friendsModalTitle: {
+    color: Colors.purple,
+    fontWeight: "bold",
+    fontSize: 18,
+    marginBottom: 12,
+  },
+  friendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.blue_dark,
+    padding: 10,
+  },
+  friendAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    marginRight: 12,
+    backgroundColor: Colors.gray,
+  },
+  friendName: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+  friendEmail: {
+    color: Colors.gray,
+    fontSize: 13,
+  },
+  friendRowSelected: {
+    backgroundColor: Colors.blue_dark,
+  },
+  friendAvatarSelected: {
+    borderColor: Colors.purple,
+    borderWidth: 2,
+  },
+  friendNameSelected: {
+    color: Colors.purple,
+  },
+  selectAllBtn: {
+    alignSelf: "flex-end",
+    marginBottom: 8,
+    padding: 8,
+  },
+  modalCancelBtn: {
+    backgroundColor: "transparent",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCancelText: {
+    color: Colors.purple,
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  modalSendBtn: {
+    backgroundColor: Colors.purple,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalSendText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
 export default CurrentEventChat;
