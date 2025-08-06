@@ -18,47 +18,14 @@ import {
 } from "../../../resources/utils/global";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Storage, eventBus } from "../../../resources/utils";
+import { CustomModal, Storage, eventBus } from "../../../resources/utils";
 import Constants from "expo-constants";
-import { Events } from "../../../resources/services";
+import { Events, FriendService } from "../../../resources/services";
 import { socket } from "../../../resources/providers/socket";
 import moment from "moment";
 
 const { width, height } = Dimensions.get("window");
 const server = Constants.expoConfig?.extra?.SERVER;
-
-const fakeFriends = [
-  {
-    id: 1,
-    name: "Bianca Albert",
-    email: "bianca.albert@example.com",
-    photo: `${server}img/random_location.jpg`,
-  },
-  {
-    id: 2,
-    name: "Victor Hansen",
-    email: "victor.hansen@example.com",
-    photo: `${server}img/random_location.jpg`,
-  },
-  {
-    id: 3,
-    name: "Raphaël Andre",
-    email: "raphael.andre@example.com",
-    photo: `${server}img/random_location.jpg`,
-  },
-  {
-    id: 4,
-    name: "Imogen Hobbelink",
-    email: "imogen.hobbelink@example.com",
-    photo: `${server}img/random_location.jpg`,
-  },
-  {
-    id: 5,
-    name: "Lisa Garnier",
-    email: "lisa.garnier@example.com",
-    photo: `${server}img/random_location.jpg`,
-  },
-];
 
 const CurrentEventChat: React.FC = () => {
   const router = useRouter();
@@ -74,6 +41,8 @@ const CurrentEventChat: React.FC = () => {
   const [status, setStatus] = useState<any>();
   const [showFriendsModal, setShowFriendsModal] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
+  const [friends, setFriends] = useState<any>();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [popupVisible, setPopupVisible] = useState(false); // Popup new message notification
   const [popupData, setPopupData] = useState<{
@@ -99,6 +68,14 @@ const CurrentEventChat: React.FC = () => {
 
       const getComments = await Events.getComments({ event_id: eventForm?.id });
       setComments(getComments?.comments);
+
+      // we load our friends
+
+      const getFriends = await FriendService.getFriends({
+        user_id: getUser?.user?.id,
+      });
+
+      setFriends(getFriends?.friends?.friends);
     })();
   }, []);
 
@@ -208,8 +185,32 @@ const CurrentEventChat: React.FC = () => {
     setInput("");
   };
 
+  const handleInvitation = () => {
+    socket?.emit(SocketEvents.EVENTS.INVITE_FRIEND, {
+      event_id: currentEvent?.id,
+      sender_id: user?.user?.id,
+      user_ids: selectedFriends,
+    }); // We send an invitation to our friends
+    setShowFriendsModal(false);
+    setSelectedFriends([]);
+    setShowSuccessModal(true); // Show success modal
+  };
+
   return (
     <ImageBackground source={{ uri: server + backgroundPic }} style={styles.bg}>
+      {/** Successful modal */}
+      <CustomModal
+        visible={showSuccessModal}
+        iconName="checkmark-circle"
+        iconColor={Colors.purple}
+        iconSize={48}
+        title="Invitations sent!"
+        message="Your friends have been invited successfully."
+        confirmText="OK"
+        onConfirm={() => setShowSuccessModal(false)}
+        onClose={() => setShowSuccessModal(false)}
+      />
+
       {/**  We adding pop up notification */}
       {popupVisible && popupData && (
         <Animated.View
@@ -283,21 +284,21 @@ const CurrentEventChat: React.FC = () => {
             <TouchableOpacity
               style={styles.selectAllBtn}
               onPress={() => {
-                if (selectedFriends.length === fakeFriends.length) {
+                if (selectedFriends.length === friends.length) {
                   setSelectedFriends([]); // Unselect all
                 } else {
-                  setSelectedFriends(fakeFriends.map((f) => f.id)); // Select all
+                  setSelectedFriends(friends.map((f: any) => f.id)); // Select all
                 }
               }}
             >
               <Text style={{ color: Colors.purple, fontWeight: "bold" }}>
-                {selectedFriends.length === fakeFriends.length
+                {selectedFriends.length === friends.length
                   ? "Unselect All"
                   : "Select All"}
               </Text>
             </TouchableOpacity>
             <FlatList
-              data={fakeFriends}
+              data={friends}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => {
                 const isSelected = selectedFriends.includes(item.id);
@@ -317,7 +318,11 @@ const CurrentEventChat: React.FC = () => {
                     }}
                   >
                     <Image
-                      source={{ uri: item.photo }}
+                      source={{
+                        uri: item?.photo
+                          ? `${server}storage/${item?.photo}`
+                          : `${server}img/random_location.jpg`,
+                      }}
                       style={[
                         styles.friendAvatar,
                         isSelected && styles.friendAvatarSelected,
@@ -330,9 +335,8 @@ const CurrentEventChat: React.FC = () => {
                           isSelected && styles.friendNameSelected,
                         ]}
                       >
-                        {item.name}
+                        {item?.person?.username}
                       </Text>
-                      <Text style={styles.friendEmail}>{item.email}</Text>
                     </View>
                     {isSelected && (
                       <Ionicons
@@ -362,9 +366,7 @@ const CurrentEventChat: React.FC = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalSendBtn}
-                onPress={() => {
-                  // Add send functionality here later
-                }}
+                onPress={handleInvitation}
               >
                 <Text style={styles.modalSendText}>Send</Text>
               </TouchableOpacity>
@@ -678,10 +680,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 15,
-  },
-  friendEmail: {
-    color: Colors.gray,
-    fontSize: 13,
   },
   friendRowSelected: {
     backgroundColor: Colors.blue_dark,

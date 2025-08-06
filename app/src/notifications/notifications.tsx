@@ -25,6 +25,12 @@ const NOTIFICATIONS_STATUS = {
   UNREADED: 0,
 };
 
+const NOTIFICATIONS_TYPES = {
+  NEW_MESSAGE: 6,
+  NEW_EVENT: 7,
+  NEW_INVITATION: 8,
+};
+
 const NotificationsScreen: React.FC = () => {
   const router = useRouter();
 
@@ -39,6 +45,8 @@ const NotificationsScreen: React.FC = () => {
       });
 
       setNotifications(notifications?.notifications);
+
+      console.log(notifications?.notifications, " HERE ");
 
       setTimeout(async () => {
         socket?.emit(SocketEvents.NOTIFICATIONS.READ, {
@@ -95,6 +103,25 @@ const NotificationsScreen: React.FC = () => {
           {moment(item.created_at).fromNow()}
         </Text>
         <Text style={styles.notificationDescription}>{item.message}</Text>
+        {item.notification_type_id === NOTIFICATIONS_TYPES.NEW_INVITATION &&
+          isNew && (
+            <TouchableOpacity
+              style={styles.acceptBtn}
+              onPress={() => {
+                // TODO: Add accept invitation logic here
+              }}
+            >
+              <Text style={styles.acceptBtnText}>Accept Invitation</Text>
+            </TouchableOpacity>
+          )}
+        {item.notification_type_id === NOTIFICATIONS_TYPES.NEW_INVITATION &&
+          !isNew && (
+            <Text
+              style={[styles.notificationDescription, { color: Colors.purple }]}
+            >
+              Invitation expired
+            </Text>
+          )}
       </View>
     );
   };
@@ -185,6 +212,20 @@ const styles = StyleSheet.create({
   },
   notificationDescription: {
     color: Colors.gray,
+    fontSize: 15,
+  },
+  acceptBtn: {
+    marginTop: 12,
+    backgroundColor: Colors.purple,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    alignSelf: "flex-end",
+  },
+  acceptBtnText: {
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 15,
   },
 });
