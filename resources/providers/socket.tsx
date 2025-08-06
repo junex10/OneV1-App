@@ -69,6 +69,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket?.on(SocketEvents.EVENTS.NEW_POST_LIKE, (data: any) =>
       eventBus.emit(SocketEvents.EVENTS.NEW_POST_LIKE, data)
     );
+    socket?.on(SocketEvents.EVENTS.ACCEPT_INVITATION, (data: any) =>
+      eventBus.emit(SocketEvents.EVENTS.ACCEPT_INVITATION, data)
+    );
 
     socket?.on(SocketEvents.NOTIFICATIONS.READ, (data: any) =>
       eventBus.emit(SocketEvents.NOTIFICATIONS.READ, data)

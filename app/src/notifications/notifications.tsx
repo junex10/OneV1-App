@@ -46,13 +46,11 @@ const NotificationsScreen: React.FC = () => {
 
       setNotifications(notifications?.notifications);
 
-      console.log(notifications?.notifications, " HERE ");
-
-      setTimeout(async () => {
+      /*setTimeout(async () => {
         socket?.emit(SocketEvents.NOTIFICATIONS.READ, {
           user_id: getUser?.user?.id,
         });
-      }, 1000);
+      }, 1000); Fix this later */
     };
 
     fetchNotifications();
@@ -74,6 +72,40 @@ const NotificationsScreen: React.FC = () => {
       );
     };
   }, [notifications]);
+
+  useEffect(() => {
+    const handleNewInvitation = (data: any) => {
+      setNotifications((prev: any[]) =>
+        prev.map((notif) =>
+          notif.id === data.notification_id
+            ? { ...notif, status: NOTIFICATIONS_STATUS.READED }
+            : notif
+        )
+      );
+    };
+
+    eventBus.on(SocketEvents.EVENTS.ACCEPT_INVITATION, handleNewInvitation);
+
+    return () => {
+      eventBus.off(SocketEvents.EVENTS.ACCEPT_INVITATION, handleNewInvitation);
+    };
+  });
+
+  const handleInvitation = async (
+    notification_id: number,
+    event_id: number
+  ) => {
+    const getUser = await Storage.get("user");
+    socket?.emit(SocketEvents.EVENTS.ACCEPT_INVITATION, {
+      user_id: getUser?.user?.id,
+      event_id,
+      notification_id,
+    });
+    router.push({
+      pathname: "/src/event/current-event",
+      params: { event_id: JSON.stringify(event_id) },
+    });
+  };
 
   const renderItem = ({ item }: any) => {
     const isNew = item.status !== NOTIFICATIONS_STATUS.READED;
@@ -107,20 +139,10 @@ const NotificationsScreen: React.FC = () => {
           isNew && (
             <TouchableOpacity
               style={styles.acceptBtn}
-              onPress={() => {
-                // TODO: Add accept invitation logic here
-              }}
+              onPress={() => handleInvitation(item?.id, item?.event_id)}
             >
               <Text style={styles.acceptBtnText}>Accept Invitation</Text>
             </TouchableOpacity>
-          )}
-        {item.notification_type_id === NOTIFICATIONS_TYPES.NEW_INVITATION &&
-          !isNew && (
-            <Text
-              style={[styles.notificationDescription, { color: Colors.purple }]}
-            >
-              Invitation expired
-            </Text>
           )}
       </View>
     );
