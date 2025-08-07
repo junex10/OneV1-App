@@ -35,6 +35,7 @@ const NotificationsScreen: React.FC = () => {
   const router = useRouter();
 
   const [notifications, setNotifications] = useState<any>([]);
+  const [eventsOnGoing, setEventsOnGoing] = useState<any>([]);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -46,11 +47,20 @@ const NotificationsScreen: React.FC = () => {
 
       setNotifications(notifications?.notifications);
 
-      /*setTimeout(async () => {
+      const eventIds = notifications?.notifications
+        .filter(
+          (notif: any) =>
+            notif.event_id !== undefined && notif.event_id !== null
+        )
+        .map((notif: any) => notif.event_id);
+      // Save unique event IDs in eventsOnGoing state
+      setEventsOnGoing(Array.from(new Set(eventIds)));
+
+      setTimeout(async () => {
         socket?.emit(SocketEvents.NOTIFICATIONS.READ, {
           user_id: getUser?.user?.id,
         });
-      }, 1000); Fix this later */
+      }, 1000);
     };
 
     fetchNotifications();
