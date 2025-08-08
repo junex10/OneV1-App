@@ -73,6 +73,7 @@ const UploadPhoto: React.FC = () => {
           pathname: "/src/login/create-account/verify-code",
           params: {
             user: JSON.stringify(newUser),
+            password: JSON.stringify({ password: getUser?.password }),
           },
         });
       } else {

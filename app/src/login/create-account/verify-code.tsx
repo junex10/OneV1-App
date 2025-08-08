@@ -26,7 +26,7 @@ const VerifyCode: React.FC = () => {
   const [getUser, setUser] = useState<any>(null);
   const codeAnim = useRef(new Animated.Value(1)).current;
   const router = useRouter();
-  const { user } = useLocalSearchParams();
+  const { user, password } = useLocalSearchParams();
 
   useEffect(() => {
     const userData = user ? JSON.parse(user as string) : null;
@@ -48,9 +48,14 @@ const VerifyCode: React.FC = () => {
   };
 
   const handleConfirm = async () => {
+    const p = password ? JSON.parse(password as string) : null;
     const data = await Auth.verifyUser(Number(code));
-    if (data?.message) {
-      Storage.set("user", getUser);
+    const user = await Auth.login({
+      username: getUser?.user?.person?.username,
+      password: p?.password,
+    });
+    if (data?.message && user?.data) {
+      Storage.set("user", user?.data);
       socket?.emit(SocketEvents.USER_SOCKET, {
         user_id: getUser?.user?.id,
       });

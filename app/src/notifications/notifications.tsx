@@ -183,7 +183,7 @@ const NotificationsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.blue_dark,
+    backgroundColor: Colors.blue_dark_2,
   },
   header: {
     flexDirection: "row",
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 6, // Added for Android and more prominent shadow
+    elevation: 6,
   },
   newNotificationCard: {
     borderWidth: 1.5,

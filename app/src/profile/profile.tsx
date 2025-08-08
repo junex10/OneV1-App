@@ -232,7 +232,7 @@ const Profile: React.FC = () => {
               <Text style={styles.email}>{user?.user?.email}</Text>
               <View style={styles.addressRow}></View>
               <Text style={styles.subscribers}>
-                {user?.person?.subscribers
+                {user?.user?.person?.subscribers
                   ? Number(user?.user?.person?.subscribers)
                   : 0}{" "}
                 subscribers
